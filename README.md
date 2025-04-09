@@ -1,0 +1,1 @@
+# magic-pod-mcp-server
