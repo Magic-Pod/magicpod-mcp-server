@@ -1,7 +1,9 @@
 import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio.js";
-import {getBatchRuns} from "./tools/getBatchRuns.js";
+import {getBatchRuns} from "./tools/get-batch-runs.js";
 import {Command} from "commander";
+import {searchMagicpodArticles} from "./tools/search-magicpod-articles.js";
+import {readMagicpodArticle} from "./tools/read-magicpod-article.js";
 
 const program = new Command();
 program.option('--api-token <key>', 'MagicPod API token to use');
@@ -24,6 +26,8 @@ const server = new McpServer({
 
 // Tools
 getBatchRuns(server, options.apiToken);
+searchMagicpodArticles(server);
+readMagicpodArticle(server);
 
 async function main() {
     const transport = new StdioServerTransport();
