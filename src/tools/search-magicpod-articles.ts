@@ -1,12 +1,12 @@
 import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {z} from "zod";
 
-const makeRequest = async (query: string) => {
+const makeRequest = async (query: string, locale: 'ja' | 'en-us') => {
     const headers = {
         Accept: "application/json",
     };
     try {
-        const url = `https://trident-qa.zendesk.com/api/v2/help_center/articles/search.json?query=${query}`;
+        const url = `https://trident-qa.zendesk.com/api/v2/help_center/articles/search.json?query=${query}&locale=${locale}`;
         const response = await fetch(url, {headers});
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -23,10 +23,11 @@ export const searchMagicpodArticles = (server: McpServer) => {
         "search-magicpod-articles",
         "Search the list of articles on MagicPod help center by specified keywords",
         {
-            query: z.string().describe("Queries to search MagicPod Help Center's articles, split by whitespaces")
+            query: z.string().describe("Queries to search MagicPod Help Center's articles, split by whitespaces"),
+            locale: z.union([z.literal('ja'), z.literal('en-us')]).describe("Query's and search target's locale")
         },
-        async ({query}) => {
-            const response = await makeRequest(query);
+        async ({query, locale}) => {
+            const response = await makeRequest(query, locale);
             // The response has "body" field, but it is too large for LLM
             // So, such large or insignificant fields are filtered here
             response.results = response.results.map((r: any) => ({

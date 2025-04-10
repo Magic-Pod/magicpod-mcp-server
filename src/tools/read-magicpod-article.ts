@@ -1,12 +1,12 @@
 import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {z} from "zod";
 
-const makeRequest = async (articleId: string) => {
+const makeRequest = async (articleId: string, locale: 'ja' | 'en-us') => {
     const headers = {
         Accept: "application/json",
     };
     try {
-        const url = `https://trident-qa.zendesk.com/api/v2/help_center/articles/${articleId}.json`;
+        const url = `https://trident-qa.zendesk.com/api/v2/help_center/${locale}/articles/${articleId}.json`;
         const response = await fetch(url, {headers});
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -23,10 +23,11 @@ export const readMagicpodArticle = (server: McpServer) => {
         "read-magicpod-article",
         "Read a specified article on MagicPod help center",
         {
-            articleId: z.string().describe("An article ID of MagicPod Help Center, which can be retrieved by 'search-magicpod-articles' tool")
+            articleId: z.string().describe("An article ID of MagicPod Help Center, which can be retrieved by 'search-magicpod-articles' tool"),
+            locale: z.union([z.literal('ja'), z.literal('en-us')]).describe("Article's language")
         },
-        async ({articleId}) => {
-            const response = await makeRequest(articleId);
+        async ({articleId, locale}) => {
+            const response = await makeRequest(articleId, locale);
             return {
                 content: [
                     {
