@@ -30,7 +30,7 @@ export class MCPProxy {
   private tools: Record<string, NewToolDefinition>
   private openApiLookup: Record<string, OpenAPIV3.OperationObject & { method: string; path: string }>
 
-  constructor(name: string, openApiSpec: OpenAPIV3.Document) {
+  constructor(name: string, openApiSpec: OpenAPIV3.Document, apiToken: string) {
     this.server = new Server({ name, version: '1.0.0' }, { capabilities: { tools: {} } })
     const baseUrl = openApiSpec.servers?.[0].url
     if (!baseUrl) {
@@ -39,7 +39,10 @@ export class MCPProxy {
     this.httpClient = new HttpClient(
       {
         baseUrl,
-        headers: this.parseHeadersFromEnv(),
+        headers: {
+          ...this.parseHeadersFromEnv(),
+          Authorization: `Token ${apiToken}`
+        },
       },
       openApiSpec,
     )

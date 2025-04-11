@@ -40,7 +40,7 @@ export class HttpClient {
         baseURL: config.baseUrl,
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'notion-mcp-server',
+          'User-Agent': 'magic-pod-mcp-server',
           ...config.headers,
         },
       },

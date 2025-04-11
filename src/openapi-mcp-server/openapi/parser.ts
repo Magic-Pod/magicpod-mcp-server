@@ -364,7 +364,7 @@ export class OpenAPIToMCPConverter {
       return null
     }
 
-    const methodName = operation.operationId
+    const methodName = operation.operationId.replaceAll("\.", "_");
 
     const inputSchema: IJsonSchema & { type: 'object' } = {
       $defs: this.convertComponentsToJsonSchema(),

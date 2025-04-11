@@ -4,6 +4,7 @@ import {getBatchRuns} from "./tools/get-batch-runs.js";
 import {Command} from "commander";
 import {searchMagicpodArticles} from "./tools/search-magicpod-articles.js";
 import {readMagicpodArticle} from "./tools/read-magicpod-article.js";
+import {initMagicPodApiProxy} from "./tools/magicpod-web-api.js";
 
 const program = new Command();
 program.option('--api-token <key>', 'MagicPod API token to use');
@@ -24,14 +25,21 @@ const server = new McpServer({
     },
 });
 
-// Tools
-getBatchRuns(server, options.apiToken);
-searchMagicpodArticles(server);
-readMagicpodArticle(server);
+
 
 async function main() {
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
+    const proxy = await initMagicPodApiProxy(options.apiToken);
+    const server = proxy.getServer();
+
+    // Tools
+    // getBatchRuns(server, options.apiToken);
+    // searchMagicpodArticles(server);
+    // readMagicpodArticle(server);
+
+    await proxy.connect(new StdioServerTransport());
+
+    // const transport = new StdioServerTransport();
+    // await server.connect(transport);
     console.error("MagicPod MCP Server running on stdio");
 }
 
