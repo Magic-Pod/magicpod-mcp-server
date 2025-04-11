@@ -104,8 +104,8 @@ export class MCPProxy {
         tools.push({
           name: tool.name,
           description: tool.description,
-          inputSchema: zodToJsonSchema(this.otherTools[0].inputSchema, "input")
-            .definitions?.input as Tool["inputSchema"],
+          inputSchema: zodToJsonSchema(tool.inputSchema, "input").definitions
+            ?.input as Tool["inputSchema"],
         });
       }
 
