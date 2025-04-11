@@ -1,185 +1,216 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js'
-import { CallToolRequestSchema, JSONRPCResponse, ListToolsRequestSchema, Tool } from '@modelcontextprotocol/sdk/types.js'
-import { JSONSchema7 as IJsonSchema } from 'json-schema'
-import { OpenAPIToMCPConverter } from '../openapi/parser.js'
-import { HttpClient, HttpClientError } from '../client/http-client.js'
-import { OpenAPIV3 } from 'openapi-types'
-import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
-import {zodToJsonSchema} from "openai/_vendor/zod-to-json-schema/index";
-import {ZodRawShape} from "zod";
-import { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import {
+  CallToolRequestSchema,
+  JSONRPCResponse,
+  ListToolsRequestSchema,
+  Tool,
+} from "@modelcontextprotocol/sdk/types.js";
+import { JSONSchema7 as IJsonSchema } from "json-schema";
+import { OpenAPIToMCPConverter } from "../openapi/parser.js";
+import { HttpClient, HttpClientError } from "../client/http-client.js";
+import { OpenAPIV3 } from "openapi-types";
+import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import { zodToJsonSchema } from "openai/_vendor/zod-to-json-schema/index";
+import { ZodRawShape } from "zod";
+import { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 type PathItemObject = OpenAPIV3.PathItemObject & {
-  get?: OpenAPIV3.OperationObject
-  put?: OpenAPIV3.OperationObject
-  post?: OpenAPIV3.OperationObject
-  delete?: OpenAPIV3.OperationObject
-  patch?: OpenAPIV3.OperationObject
-}
+  get?: OpenAPIV3.OperationObject;
+  put?: OpenAPIV3.OperationObject;
+  post?: OpenAPIV3.OperationObject;
+  delete?: OpenAPIV3.OperationObject;
+  patch?: OpenAPIV3.OperationObject;
+};
 
 type NewToolDefinition = {
   methods: Array<{
-    name: string
-    description: string
-    inputSchema: IJsonSchema & { type: 'object' }
-    returnSchema?: IJsonSchema
-  }>
-}
+    name: string;
+    description: string;
+    inputSchema: IJsonSchema & { type: "object" };
+    returnSchema?: IJsonSchema;
+  }>;
+};
 
 export type OtherToolDefinition<Args extends ZodRawShape> = {
-  name: string
-  description: string
-  inputSchema: Args
-  handleRequest: (args: Args) => ReturnType<ToolCallback<Args>>
-}
+  name: string;
+  description: string;
+  inputSchema: Args;
+  handleRequest: (args: Args) => ReturnType<ToolCallback<Args>>;
+};
 
 // import this class, extend and return server
 export class MCPProxy {
-  private server: Server
-  private httpClient: HttpClient
-  private tools: Record<string, NewToolDefinition>
-  private openApiLookup: Record<string, OpenAPIV3.OperationObject & { method: string; path: string }>
+  private server: Server;
+  private httpClient: HttpClient;
+  private tools: Record<string, NewToolDefinition>;
+  private openApiLookup: Record<
+    string,
+    OpenAPIV3.OperationObject & { method: string; path: string }
+  >;
 
-  constructor(name: string, openApiSpec: OpenAPIV3.Document, apiToken: string, private otherTools: OtherToolDefinition<any>[]) {
-    this.server = new Server({ name, version: '1.0.0' }, { capabilities: { tools: {} } })
-    const baseUrl = openApiSpec.servers?.[0].url
+  constructor(
+    name: string,
+    openApiSpec: OpenAPIV3.Document,
+    apiToken: string,
+    private otherTools: OtherToolDefinition<any>[],
+  ) {
+    this.server = new Server(
+      { name, version: "1.0.0" },
+      { capabilities: { tools: {} } },
+    );
+    const baseUrl = openApiSpec.servers?.[0].url;
     if (!baseUrl) {
-      throw new Error('No base URL found in OpenAPI spec')
+      throw new Error("No base URL found in OpenAPI spec");
     }
     this.httpClient = new HttpClient(
       {
         baseUrl,
         headers: {
           ...this.parseHeadersFromEnv(),
-          Authorization: `Token ${apiToken}`
+          Authorization: `Token ${apiToken}`,
         },
       },
       openApiSpec,
-    )
+    );
 
     // Convert OpenAPI spec to MCP tools
-    const converter = new OpenAPIToMCPConverter(openApiSpec)
-    const { tools, openApiLookup } = converter.convertToMCPTools()
-    this.tools = tools
-    this.openApiLookup = openApiLookup
+    const converter = new OpenAPIToMCPConverter(openApiSpec);
+    const { tools, openApiLookup } = converter.convertToMCPTools();
+    this.tools = tools;
+    this.openApiLookup = openApiLookup;
 
-    this.setupHandlers()
+    this.setupHandlers();
   }
 
   private setupHandlers() {
     // Handle tool listing
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      const tools: Tool[] = []
+      const tools: Tool[] = [];
 
       // Add methods as separate tools to match the MCP format
       Object.entries(this.tools).forEach(([toolName, def]) => {
-        def.methods.forEach(method => {
+        def.methods.forEach((method) => {
           const toolNameWithMethod = `${toolName}-${method.name}`;
           const truncatedToolName = this.truncateToolName(toolNameWithMethod);
           tools.push({
             name: truncatedToolName,
             description: method.description,
-            inputSchema: method.inputSchema as Tool['inputSchema'],
-          })
-        })
-      })
+            inputSchema: method.inputSchema as Tool["inputSchema"],
+          });
+        });
+      });
 
       for (const tool of this.otherTools) {
         tools.push({
           name: tool.name,
           description: tool.description,
-          inputSchema: zodToJsonSchema(this.otherTools[0].inputSchema, "input").definitions?.input as Tool['inputSchema'],
-        })
+          inputSchema: zodToJsonSchema(this.otherTools[0].inputSchema, "input")
+            .definitions?.input as Tool["inputSchema"],
+        });
       }
 
-      return { tools }
-    })
+      return { tools };
+    });
 
     // Handle tool calling
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      console.error('calling tool', request.params)
-      const { name, arguments: params } = request.params
+      console.error("calling tool", request.params);
+      const { name, arguments: params } = request.params;
 
-      const tool = this.otherTools.find((t) => t.name === name)
+      const tool = this.otherTools.find((t) => t.name === name);
       if (tool) {
-        return tool.handleRequest(params)
+        return tool.handleRequest(params);
       }
 
       // Find the operation in OpenAPI spec
-      const operation = this.findOperation(name)
-      console.error('operations', this.openApiLookup)
+      const operation = this.findOperation(name);
+      console.error("operations", this.openApiLookup);
       if (!operation) {
-        throw new Error(`Method ${name} not found`)
+        throw new Error(`Method ${name} not found`);
       }
 
       try {
         // Execute the operation
-        const response = await this.httpClient.executeOperation(operation, params)
+        const response = await this.httpClient.executeOperation(
+          operation,
+          params,
+        );
 
         // Convert response to MCP format
         return {
           content: [
             {
-              type: 'text', // currently this is the only type that seems to be used by mcp server
+              type: "text", // currently this is the only type that seems to be used by mcp server
               text: JSON.stringify(response.data), // TODO: pass through the http status code text?
             },
           ],
-        }
+        };
       } catch (error) {
-        console.error('Error in tool call', error)
+        console.error("Error in tool call", error);
         if (error instanceof HttpClientError) {
-          console.error('HttpClientError encountered, returning structured error', error)
-          const data = error.data?.response?.data ?? error.data ?? {}
+          console.error(
+            "HttpClientError encountered, returning structured error",
+            error,
+          );
+          const data = error.data?.response?.data ?? error.data ?? {};
           return {
             content: [
               {
-                type: 'text',
+                type: "text",
                 text: JSON.stringify({
-                  status: 'error', // TODO: get this from http status code?
-                  ...(typeof data === 'object' ? data : { data: data }),
+                  status: "error", // TODO: get this from http status code?
+                  ...(typeof data === "object" ? data : { data: data }),
                 }),
               },
             ],
-          }
+          };
         }
-        throw error
+        throw error;
       }
-    })
+    });
   }
 
-  private findOperation(operationId: string): (OpenAPIV3.OperationObject & { method: string; path: string }) | null {
-    return this.openApiLookup[operationId] ?? null
+  private findOperation(
+    operationId: string,
+  ): (OpenAPIV3.OperationObject & { method: string; path: string }) | null {
+    return this.openApiLookup[operationId] ?? null;
   }
 
   private parseHeadersFromEnv(): Record<string, string> {
-    const headersJson = process.env.OPENAPI_MCP_HEADERS
+    const headersJson = process.env.OPENAPI_MCP_HEADERS;
     if (!headersJson) {
-      return {}
+      return {};
     }
 
     try {
-      const headers = JSON.parse(headersJson)
-      if (typeof headers !== 'object' || headers === null) {
-        console.warn('OPENAPI_MCP_HEADERS environment variable must be a JSON object, got:', typeof headers)
-        return {}
+      const headers = JSON.parse(headersJson);
+      if (typeof headers !== "object" || headers === null) {
+        console.warn(
+          "OPENAPI_MCP_HEADERS environment variable must be a JSON object, got:",
+          typeof headers,
+        );
+        return {};
       }
-      return headers
+      return headers;
     } catch (error) {
-      console.warn('Failed to parse OPENAPI_MCP_HEADERS environment variable:', error)
-      return {}
+      console.warn(
+        "Failed to parse OPENAPI_MCP_HEADERS environment variable:",
+        error,
+      );
+      return {};
     }
   }
 
-  private getContentType(headers: Headers): 'text' | 'image' | 'binary' {
-    const contentType = headers.get('content-type')
-    if (!contentType) return 'binary'
+  private getContentType(headers: Headers): "text" | "image" | "binary" {
+    const contentType = headers.get("content-type");
+    if (!contentType) return "binary";
 
-    if (contentType.includes('text') || contentType.includes('json')) {
-      return 'text'
-    } else if (contentType.includes('image')) {
-      return 'image'
+    if (contentType.includes("text") || contentType.includes("json")) {
+      return "text";
+    } else if (contentType.includes("image")) {
+      return "image";
     }
-    return 'binary'
+    return "binary";
   }
 
   private truncateToolName(name: string): string {
@@ -191,10 +222,10 @@ export class MCPProxy {
 
   async connect(transport: Transport) {
     // The SDK will handle stdio communication
-    await this.server.connect(transport)
+    await this.server.connect(transport);
   }
 
   getServer() {
-    return this.server
+    return this.server;
   }
 }
