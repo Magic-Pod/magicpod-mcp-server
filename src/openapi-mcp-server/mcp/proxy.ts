@@ -5,6 +5,9 @@ import { OpenAPIToMCPConverter } from '../openapi/parser.js'
 import { HttpClient, HttpClientError } from '../client/http-client.js'
 import { OpenAPIV3 } from 'openapi-types'
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
+import {zodToJsonSchema} from "openai/_vendor/zod-to-json-schema/index";
+import {ZodRawShape} from "zod";
+import { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 
 type PathItemObject = OpenAPIV3.PathItemObject & {
   get?: OpenAPIV3.OperationObject
@@ -23,6 +26,13 @@ type NewToolDefinition = {
   }>
 }
 
+export type OtherToolDefinition<Args extends ZodRawShape> = {
+  name: string
+  description: string
+  inputSchema: Args
+  handleRequest: (args: Args) => ReturnType<ToolCallback<Args>>
+}
+
 // import this class, extend and return server
 export class MCPProxy {
   private server: Server
@@ -30,7 +40,7 @@ export class MCPProxy {
   private tools: Record<string, NewToolDefinition>
   private openApiLookup: Record<string, OpenAPIV3.OperationObject & { method: string; path: string }>
 
-  constructor(name: string, openApiSpec: OpenAPIV3.Document, apiToken: string) {
+  constructor(name: string, openApiSpec: OpenAPIV3.Document, apiToken: string, private otherTools: OtherToolDefinition<any>[]) {
     this.server = new Server({ name, version: '1.0.0' }, { capabilities: { tools: {} } })
     const baseUrl = openApiSpec.servers?.[0].url
     if (!baseUrl) {
@@ -74,6 +84,14 @@ export class MCPProxy {
         })
       })
 
+      for (const tool of this.otherTools) {
+        tools.push({
+          name: tool.name,
+          description: tool.description,
+          inputSchema: zodToJsonSchema(this.otherTools[0].inputSchema, "input").definitions?.input as Tool['inputSchema'],
+        })
+      }
+
       return { tools }
     })
 
@@ -81,6 +99,11 @@ export class MCPProxy {
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       console.error('calling tool', request.params)
       const { name, arguments: params } = request.params
+
+      const tool = this.otherTools.find((t) => t.name === name)
+      if (tool) {
+        return tool.handleRequest(params)
+      }
 
       // Find the operation in OpenAPI spec
       const operation = this.findOperation(name)

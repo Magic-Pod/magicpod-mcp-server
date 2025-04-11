@@ -1,5 +1,5 @@
-import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js";
 import {z} from "zod";
+import {OtherToolDefinition} from "../openapi-mcp-server/mcp/proxy.js";
 
 const makeRequest = async (articleId: string, locale: 'ja' | 'en-us') => {
     const headers = {
@@ -18,15 +18,15 @@ const makeRequest = async (articleId: string, locale: 'ja' | 'en-us') => {
     }
 }
 
-export const readMagicpodArticle = (server: McpServer) => {
-    server.tool(
-        "read-magicpod-article",
-        "Read a specified article on MagicPod help center",
-        {
+export const readMagicpodArticle = () => {
+    return {
+        name: "read-magicpod-article",
+        description: "Read a specified article on MagicPod help center",
+        inputSchema: z.object({
             articleId: z.string().describe("An article ID of MagicPod Help Center, which can be retrieved by 'search-magicpod-articles' tool"),
             locale: z.union([z.literal('ja'), z.literal('en-us')]).describe("Article's language")
-        },
-        async ({articleId, locale}) => {
+        }),
+        handleRequest: async ({articleId, locale}) => {
             const response = await makeRequest(articleId, locale);
             return {
                 content: [
@@ -37,5 +37,5 @@ export const readMagicpodArticle = (server: McpServer) => {
                 ],
             };
         }
-    );
+    } satisfies OtherToolDefinition<any>
 }

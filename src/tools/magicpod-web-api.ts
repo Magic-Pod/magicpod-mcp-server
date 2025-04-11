@@ -1,5 +1,5 @@
 import {OpenAPIV3} from "openapi-types";
-import {MCPProxy} from "../openapi-mcp-server/mcp/proxy.js";
+import {MCPProxy, OtherToolDefinition} from "../openapi-mcp-server/mcp/proxy.js";
 
 const schemaUrl = "https://app.magicpod.com/api/v1.0/doc/?format=openapi";
 
@@ -16,9 +16,9 @@ const getOpenApiSpec = async () => {
     }
 }
 
-export const initMagicPodApiProxy = async (apiToken: string) => {
+export const initMagicPodApiProxy = async (apiToken: string, tools: OtherToolDefinition<any>[]) => {
     const openApiSpec = await getOpenApiSpec();
     openApiSpec.servers = [{ url: "https://app.magicpod.com/api"}];
-    const proxy = new MCPProxy('MagicPod API', openApiSpec, apiToken);
+    const proxy = new MCPProxy('magic-pod-mcp-server', openApiSpec, apiToken, tools);
     return proxy;
 }
