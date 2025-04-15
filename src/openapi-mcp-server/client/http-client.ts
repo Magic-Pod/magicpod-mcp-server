@@ -43,7 +43,7 @@ export class HttpClient {
         baseURL: config.baseUrl,
         headers: {
           "Content-Type": "application/json",
-          "User-Agent": "magic-pod-mcp-server",
+          "User-Agent": "magicpod-mcp-server",
           ...config.headers,
         },
       },

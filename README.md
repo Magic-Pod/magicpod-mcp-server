@@ -1,4 +1,4 @@
-# magic-pod-mcp-server
+# magicpod-mcp-server
 
 An MCP (Model Context Protocol) server that integrates your AI agents with MagicPod
 
@@ -11,9 +11,9 @@ An MCP (Model Context Protocol) server that integrates your AI agents with Magic
 ```json
 {
   "mcpServers": {
-    "magic-pod-mcp-server": {
+    "magicpod-mcp-server": {
       "command": "npx",
-      "args": ["-y", "magic-pod-mcp-server", "--api-token=YOUR-API-TOKEN"]
+      "args": ["-y", "magicpod-mcp-server", "--api-token=YOUR-API-TOKEN"]
     }
   }
 }
@@ -24,9 +24,9 @@ An MCP (Model Context Protocol) server that integrates your AI agents with Magic
 ```json
 {
   "mcpServers": {
-    "magic-pod-mcp-server": {
+    "magicpod-mcp-server": {
       "command": "cmd",
-      "args": ["/c", "npx", "-y", "magic-pod-mcp-server", "--api-token=YOUR-API-TOKEN"]
+      "args": ["/c", "npx", "-y", "magicpod-mcp-server", "--api-token=YOUR-API-TOKEN"]
     }
   }
 }

@@ -26,7 +26,7 @@ export const initMagicPodApiProxy = async (
   const openApiSpec = await getOpenApiSpec();
   openApiSpec.servers = [{ url: "https://app.magicpod.com/api" }];
   const proxy = new MCPProxy(
-    "magic-pod-mcp-server",
+    "magicpod-mcp-server",
     openApiSpec,
     apiToken,
     tools,
