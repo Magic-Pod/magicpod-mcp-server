@@ -85,9 +85,9 @@ export class MCPProxy {
   private removeDescriptions(obj: object) {
     if (Array.isArray(obj)) {
       obj.forEach(this.removeDescriptions);
-    } else if (obj && typeof obj === 'object') {
+    } else if (obj && typeof obj === "object") {
       for (const key in obj) {
-        if (key === 'description') {
+        if (key === "description") {
           // @ts-ignore
           delete obj[key];
         } else {
@@ -96,6 +96,29 @@ export class MCPProxy {
         }
       }
     }
+  }
+
+  private collectRefs(obj: object): string[] {
+    const refs: string[] = [];
+    if (Array.isArray(obj)) {
+      for (const childRefs of obj.map(this.collectRefs)) {
+        for (const childRef of childRefs) {
+          refs.push(childRef);
+        }
+      }
+    } else if (obj && typeof obj === "object") {
+      for (const key in obj) {
+        if (key === "$ref") {
+          // @ts-ignore
+          const ref = obj[key] as string;
+          refs.push(ref.replaceAll("#/$defs/", ""));
+        } else {
+          // @ts-ignore
+          this.collectRefs(obj[key]).forEach(refs.push);
+        }
+      }
+    }
+    return refs;
   }
 
   private setupHandlers() {
@@ -111,12 +134,30 @@ export class MCPProxy {
 
           // to reduce the tool list response size
           // TODO description is actually required
-          this.removeDescriptions(method.inputSchema);
+          const inputSchema: typeof method.inputSchema = JSON.parse(JSON.stringify(method.inputSchema));
+          this.removeDescriptions(inputSchema);
+
+          // 95% of the response size is consumed by $defs
+          const body = method.inputSchema.properties?.body;
+          if (body == null || typeof body === "boolean") {
+            delete inputSchema["$defs"];
+          } else {
+            const refs = this.collectRefs(body);
+            if (refs.length === 0) {
+              delete inputSchema["$defs"];
+            } else if (inputSchema["$defs"]) {
+              for (const def of Object.keys(inputSchema["$defs"])) {
+                if (!refs.includes(def)) {
+                  delete inputSchema["$defs"][def];
+                }
+              }
+            }
+          }
 
           tools.push({
             name: truncatedToolName,
             description: method.description,
-            inputSchema: method.inputSchema as Tool["inputSchema"],
+            inputSchema: inputSchema as Tool["inputSchema"],
           });
         });
       });
