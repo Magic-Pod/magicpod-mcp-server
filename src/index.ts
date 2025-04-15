@@ -15,7 +15,8 @@ if (!options.apiToken) {
 }
 
 async function main() {
-  const proxy = await initMagicPodApiProxy(options.apiToken, [
+  const baseUrl = process.env.BASE_URL || "https://app.magicpod.com";
+  const proxy = await initMagicPodApiProxy(baseUrl, options.apiToken, [
     searchMagicpodArticles(),
     readMagicpodArticle(),
   ]);

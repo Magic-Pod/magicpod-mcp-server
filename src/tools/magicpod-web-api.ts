@@ -4,9 +4,7 @@ import {
   OtherToolDefinition,
 } from "../openapi-mcp-server/mcp/proxy.js";
 
-const schemaUrl = "https://app.magicpod.com/api/v1.0/doc/?format=openapi";
-
-const getOpenApiSpec = async () => {
+const getOpenApiSpec = async (schemaUrl: string) => {
   try {
     const response = await fetch(schemaUrl);
     if (!response.ok) {
@@ -20,11 +18,13 @@ const getOpenApiSpec = async () => {
 };
 
 export const initMagicPodApiProxy = async (
+  baseUrl: string,
   apiToken: string,
   tools: OtherToolDefinition<any>[],
 ) => {
-  const openApiSpec = await getOpenApiSpec();
-  openApiSpec.servers = [{ url: "https://app.magicpod.com/api" }];
+  const schemaUrl = `${baseUrl}/api/v1.0/doc/?format=openapi`;
+  const openApiSpec = await getOpenApiSpec(schemaUrl);
+  openApiSpec.servers = [{ url: `${baseUrl}/api` }];
   const proxy = new MCPProxy(
     "magicpod-mcp-server",
     openApiSpec,
