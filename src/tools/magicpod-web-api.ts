@@ -5,9 +5,7 @@ import {
 } from "../openapi-mcp-server/mcp/proxy.js";
 import swagger2openapi from "swagger2openapi";
 
-const schemaUrl = "https://app.magicpod.com/api/v1.0/doc/?format=openapi";
-
-const getOpenApiSpec = async (): Promise<OpenAPIV3.Document> => {
+const getOpenApiSpec = async (schemaUrl: string): Promise<OpenAPIV3.Document> => {
   try {
     const response = await fetch(schemaUrl);
     if (!response.ok) {
@@ -30,13 +28,15 @@ const getOpenApiSpec = async (): Promise<OpenAPIV3.Document> => {
 };
 
 export const initMagicPodApiProxy = async (
+  baseUrl: string,
   apiToken: string,
   tools: OtherToolDefinition<any>[],
 ) => {
-  const openApiSpec = await getOpenApiSpec();
-  openApiSpec.servers = [{ url: "https://app.magicpod.com/api" }];
+  const schemaUrl = `${baseUrl}/api/v1.0/doc/?format=openapi`;
+  const openApiSpec = await getOpenApiSpec(schemaUrl);
+  openApiSpec.servers = [{ url: `${baseUrl}/api` }];
   const proxy = new MCPProxy(
-    "magic-pod-mcp-server",
+    "magicpod-mcp-server",
     openApiSpec,
     apiToken,
     tools,
