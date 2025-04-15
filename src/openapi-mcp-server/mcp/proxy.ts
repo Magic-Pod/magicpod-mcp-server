@@ -82,6 +82,22 @@ export class MCPProxy {
     this.setupHandlers();
   }
 
+  private removeDescriptions(obj: object) {
+    if (Array.isArray(obj)) {
+      obj.forEach(this.removeDescriptions);
+    } else if (obj && typeof obj === 'object') {
+      for (const key in obj) {
+        if (key === 'description') {
+          // @ts-ignore
+          delete obj[key];
+        } else {
+          // @ts-ignore
+          this.removeDescriptions(obj[key]);
+        }
+      }
+    }
+  }
+
   private setupHandlers() {
     // Handle tool listing
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -92,6 +108,11 @@ export class MCPProxy {
         def.methods.forEach((method) => {
           const toolNameWithMethod = `${toolName}-${method.name}`;
           const truncatedToolName = this.truncateToolName(toolNameWithMethod);
+
+          // to reduce the tool list response size
+          // TODO description is actually required
+          this.removeDescriptions(method.inputSchema);
+
           tools.push({
             name: truncatedToolName,
             description: method.description,
