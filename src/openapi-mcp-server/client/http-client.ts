@@ -123,7 +123,7 @@ export class HttpClient {
 
     // Separate parameters based on their location
     const urlParameters: Record<string, any> = {};
-    const bodyParams: Record<string, any> = formData || { ...params };
+    let bodyParams: Record<string, any> = formData || { ...params };
 
     // Extract path and query parameters based on operation definition
     if (operation.parameters) {
@@ -179,6 +179,12 @@ export class HttpClient {
         bodyParams,
         requestConfig,
       });
+
+      // `body` attribute is somehow included in an actual request
+      if ("body" in bodyParams) {
+        bodyParams = bodyParams.body;
+      }
+
       const response = await operationFn(
         urlParameters,
         hasBody ? bodyParams : undefined,
