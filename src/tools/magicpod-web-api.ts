@@ -27,6 +27,13 @@ const getOpenApiSpec = async (schemaUrl: string): Promise<OpenAPIV3.Document> =>
   }
 };
 
+const unsupportedPaths = [
+  '/v1.0/{organization_name}/{project_name}/batch-runs/{batch_run_number}/screenshots/',
+  '/v1.0/{organization_name}/{project_name}/screenshots/{batch_task_id}/',
+  '/v1.0/magicpod-clients/api/{os}/{tag_or_version}/',
+  '/v1.0/magicpod-clients/local/{os}/{version}/'
+];
+
 export const initMagicPodApiProxy = async (
   baseUrl: string,
   apiToken: string,
@@ -35,6 +42,11 @@ export const initMagicPodApiProxy = async (
   const schemaUrl = `${baseUrl}/api/v1.0/doc/?format=openapi`;
   const openApiSpec = await getOpenApiSpec(schemaUrl);
   openApiSpec.servers = [{ url: `${baseUrl}/api` }];
+  for (const path of Object.keys(openApiSpec.paths)) {
+    if (unsupportedPaths.includes(path)) {
+      delete openApiSpec.paths[path];
+    }
+  }
   const proxy = new MCPProxy(
     "magicpod-mcp-server",
     openApiSpec,
