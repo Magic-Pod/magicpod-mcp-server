@@ -1,13 +1,14 @@
 {
   "name": "magicpod-mcp-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Model Context Protocol server for MagicPod integration",
   "type": "module",
   "bin": {
     "magicpod-mcp-server": "./build/index.js"
   },
   "scripts": {
-    "build": "tsc && chmod 755 build/index.js"
+    "build": "tsc && chmod 755 build/index.js",
+    "publish": "npm publish --access public"
   },
   "keywords": [
     "mcp",
@@ -19,6 +20,7 @@
     "type": "git",
     "url": "git+https://github.com/Magic-Pod/magicpod-mcp-server.git"
   },
+  "homepage": "https://magicpod.com/",
   "publishConfig": {
     "access": "public"
   },
@@ -29,7 +31,9 @@
     "@anthropic-ai/sdk": "^0.33.1",
     "@modelcontextprotocol/sdk": "^1.9.0",
     "@types/mustache": "^4.2.5",
+    "axios": "^1.8.4",
     "commander": "^13.1.0",
+    "form-data": "^4.0.2",
     "json-schema": "^0.4.0",
     "mustache": "^4.2.0",
     "openai": "^4.91.1",
@@ -40,6 +44,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@types/form-data": "^2.2.1",
     "@types/json-schema": "^7.0.15",
     "@types/node": "^22.14.0",
     "@types/swagger2openapi": "^7.0.4",

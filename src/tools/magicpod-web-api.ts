@@ -31,7 +31,8 @@ const unsupportedPaths = [
   '/v1.0/{organization_name}/{project_name}/batch-runs/{batch_run_number}/screenshots/',
   '/v1.0/{organization_name}/{project_name}/screenshots/{batch_task_id}/',
   '/v1.0/magicpod-clients/api/{os}/{tag_or_version}/',
-  '/v1.0/magicpod-clients/local/{os}/{version}/'
+  '/v1.0/magicpod-clients/local/{os}/{version}/',
+  '/v1.0/{organization_name}/{project_name}/upload-file/'
 ];
 
 export const initMagicPodApiProxy = async (
