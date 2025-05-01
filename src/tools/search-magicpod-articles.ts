@@ -22,7 +22,8 @@ export const searchMagicpodArticles = () => {
   return {
     name: "search-magicpod-articles",
     description:
-      "Search the list of articles on MagicPod help center by specified keywords",
+      "This tool searches the list of articles on MagicPod help center by specified keywords. " +
+      "You must use this tool whenever you mention MagicPod's specification since it has always been updated.",
     inputSchema: z.object({
       query: z
         .string()
