@@ -6,6 +6,8 @@ import { searchMagicpodArticles } from "./tools/search-magicpod-articles.js";
 import { readMagicpodArticle } from "./tools/read-magicpod-article.js";
 import { initMagicPodApiProxy } from "./tools/magicpod-web-api.js";
 import { apiV1_0UploadFileCreate } from "./tools/api-v1-0-upload-file-create.js";
+import { apiV1_0GenerateTestCaseCreate } from "./tools/api-v1-0-generate-test-case-create.js";
+import { generateTestCase } from "./prompts/generate-test-case.js";
 
 const program = new Command();
 program.option("--api-token <key>", "MagicPod API token to use");
@@ -19,11 +21,17 @@ if (!options.apiToken) {
 
 async function main() {
   const baseUrl = process.env.BASE_URL || "https://app.magicpod.com";
-  const proxy = await initMagicPodApiProxy(baseUrl, options.apiToken, [
-    apiV1_0UploadFileCreate(baseUrl, options.apiToken),
-    searchMagicpodArticles(),
-    readMagicpodArticle(),
-  ]);
+  const proxy = await initMagicPodApiProxy(
+    baseUrl,
+    options.apiToken,
+    [
+      apiV1_0UploadFileCreate(baseUrl, options.apiToken),
+      apiV1_0GenerateTestCaseCreate(baseUrl, options.apiToken),
+      searchMagicpodArticles(),
+      readMagicpodArticle(),
+    ],
+    [generateTestCase()],
+  );
   await proxy.connect(new StdioServerTransport());
   console.error("MagicPod MCP Server running on stdio");
 }

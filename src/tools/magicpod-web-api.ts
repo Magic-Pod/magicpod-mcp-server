@@ -1,17 +1,20 @@
-import {OpenAPIV2, OpenAPIV3} from "openapi-types";
+import { OpenAPIV2, OpenAPIV3 } from "openapi-types";
 import {
   MCPProxy,
   OtherToolDefinition,
+  PromptDefinition,
 } from "../openapi-mcp-server/mcp/proxy.js";
 import swagger2openapi from "swagger2openapi";
 
-const getOpenApiSpec = async (schemaUrl: string): Promise<OpenAPIV3.Document> => {
+const getOpenApiSpec = async (
+  schemaUrl: string,
+): Promise<OpenAPIV3.Document> => {
   try {
     const response = await fetch(schemaUrl);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const openApiV2Spec = await response.json() as OpenAPIV2.Document;
+    const openApiV2Spec = (await response.json()) as OpenAPIV2.Document;
     return new Promise((resolve, reject) => {
       swagger2openapi.convertObj(openApiV2Spec, {}, (err, options) => {
         if (err) {
@@ -28,17 +31,19 @@ const getOpenApiSpec = async (schemaUrl: string): Promise<OpenAPIV3.Document> =>
 };
 
 const unsupportedPaths = [
-  '/v1.0/{organization_name}/{project_name}/batch-runs/{batch_run_number}/screenshots/',
-  '/v1.0/{organization_name}/{project_name}/screenshots/{batch_task_id}/',
-  '/v1.0/magicpod-clients/api/{os}/{tag_or_version}/',
-  '/v1.0/magicpod-clients/local/{os}/{version}/',
-  '/v1.0/{organization_name}/{project_name}/upload-file/'
+  "/v1.0/{organization_name}/{project_name}/batch-runs/{batch_run_number}/screenshots/",
+  "/v1.0/{organization_name}/{project_name}/screenshots/{batch_task_id}/",
+  "/v1.0/magicpod-clients/api/{os}/{tag_or_version}/",
+  "/v1.0/magicpod-clients/local/{os}/{version}/",
+  "/v1.0/{organization_name}/{project_name}/upload-file/",
+  "/v1.0/{organization_name}/{project_name}/generate-test-case/",
 ];
 
 export const initMagicPodApiProxy = async (
   baseUrl: string,
   apiToken: string,
   tools: OtherToolDefinition<any>[],
+  prompts: PromptDefinition<any>[],
 ) => {
   const schemaUrl = `${baseUrl}/api/v1.0/doc/?format=openapi`;
   const openApiSpec = await getOpenApiSpec(schemaUrl);
@@ -53,6 +58,7 @@ export const initMagicPodApiProxy = async (
     openApiSpec,
     apiToken,
     tools,
+    prompts,
   );
   return proxy;
 };

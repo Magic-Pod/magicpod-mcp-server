@@ -43,6 +43,7 @@ export const apiV1_0UploadFileCreate = (baseUrl: string, apiToken: string) => {
         const response = await axios.post(url, formData, {
           headers: {
             ...formData.getHeaders(),
+            "User-Agent": "magicpod-mcp-server",
             Authorization: `Token ${apiToken}`,
           },
         });

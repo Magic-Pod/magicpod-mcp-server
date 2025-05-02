@@ -4,11 +4,11 @@
   "description": "Model Context Protocol server for MagicPod integration",
   "type": "module",
   "bin": {
-    "magicpod-mcp-server": "./build/index.js"
+    "magicpod-mcp-server": "build/index.js"
   },
   "scripts": {
     "build": "tsc && chmod 755 build/index.js",
-    "publish": "npm publish --access public"
+    "publish": "npm run build && npm publish --access public"
   },
   "keywords": [
     "mcp",

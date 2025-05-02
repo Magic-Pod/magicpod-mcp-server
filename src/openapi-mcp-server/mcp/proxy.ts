@@ -1,7 +1,9 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
+  GetPromptRequestSchema,
   JSONRPCResponse,
+  ListPromptsRequestSchema,
   ListToolsRequestSchema,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -11,8 +13,11 @@ import { HttpClient, HttpClientError } from "../client/http-client.js";
 import { OpenAPIV3 } from "openapi-types";
 import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { zodToJsonSchema } from "openai/_vendor/zod-to-json-schema/index";
-import { ZodRawShape } from "zod";
-import { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ZodOptional, ZodRawShape, ZodType, ZodTypeDef } from "zod";
+import {
+  PromptCallback,
+  ToolCallback,
+} from "@modelcontextprotocol/sdk/server/mcp.js";
 
 type PathItemObject = OpenAPIV3.PathItemObject & {
   get?: OpenAPIV3.OperationObject;
@@ -38,6 +43,24 @@ export type OtherToolDefinition<Args extends ZodRawShape> = {
   handleRequest: (args: Args) => ReturnType<ToolCallback<Args>>;
 };
 
+type PromptArgsRawShape = {
+  [k: string]:
+    | ZodType<string, ZodTypeDef, string>
+    | ZodOptional<ZodType<string, ZodTypeDef, string>>;
+};
+
+export type PromptDefinition<Args extends PromptArgsRawShape> = {
+  name: string;
+  description: string;
+  arguments: { name: string; description: string; required: boolean }[];
+  handleRequest: (request: {
+    params: {
+      name: string;
+      arguments?: Args;
+    };
+  }) => ReturnType<PromptCallback<Args>>;
+};
+
 // import this class, extend and return server
 export class MCPProxy {
   private server: Server;
@@ -53,10 +76,11 @@ export class MCPProxy {
     openApiSpec: OpenAPIV3.Document,
     apiToken: string,
     private otherTools: OtherToolDefinition<any>[],
+    private prompts: PromptDefinition<any>[],
   ) {
     this.server = new Server(
       { name, version: "0.1.2" },
-      { capabilities: { tools: {} } },
+      { capabilities: { tools: {}, prompts: {} } },
     );
     const baseUrl = openApiSpec.servers?.[0].url;
     if (!baseUrl) {
@@ -79,7 +103,8 @@ export class MCPProxy {
     this.tools = tools;
     this.openApiLookup = openApiLookup;
 
-    this.setupHandlers();
+    this.setupPrompts();
+    this.setupTools();
   }
 
   private removeDescriptions(obj: object) {
@@ -121,7 +146,27 @@ export class MCPProxy {
     return refs;
   }
 
-  private setupHandlers() {
+  private setupPrompts() {
+    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
+      return {
+        prompts: this.prompts.map((p) => ({
+          name: p.name,
+          description: p.description,
+          arguments: p.arguments,
+        })),
+      };
+    });
+
+    this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+      const prompt = this.prompts.find(p => p.name === request.params.name);
+      if (prompt == null) {
+        throw new Error("Unknown prompt");
+      }
+      return prompt.handleRequest(request);
+    });
+  }
+
+  private setupTools() {
     // Handle tool listing
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       const tools: Tool[] = [];
@@ -134,7 +179,9 @@ export class MCPProxy {
 
           // to reduce the tool list response size
           // TODO description is actually required
-          const inputSchema: typeof method.inputSchema = JSON.parse(JSON.stringify(method.inputSchema));
+          const inputSchema: typeof method.inputSchema = JSON.parse(
+            JSON.stringify(method.inputSchema),
+          );
           this.removeDescriptions(inputSchema);
 
           // 95% of the response size is consumed by $defs
