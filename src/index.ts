@@ -9,8 +9,9 @@ import { apiV1_0UploadFileCreate } from "./tools/api-v1-0-upload-file-create.js"
 
 const program = new Command();
 program.option("--api-token <key>", "MagicPod API token to use");
+program.option("--debug", "For internal debug use");
 program.parse(process.argv);
-const options: { apiToken: string } = program.opts();
+const options: { apiToken: string; debug: boolean } = program.opts();
 
 if (!options.apiToken) {
   console.error("--api-token must be provided");
@@ -18,7 +19,8 @@ if (!options.apiToken) {
 }
 
 async function main() {
-  const baseUrl = process.env.BASE_URL || "https://app.magicpod.com";
+  const baseUrlEnvironmentVariable = options.debug ? process.env.BASE_URL : undefined;
+  const baseUrl = baseUrlEnvironmentVariable || "https://app.magicpod.com";
   const proxy = await initMagicPodApiProxy(baseUrl, options.apiToken, [
     apiV1_0UploadFileCreate(baseUrl, options.apiToken),
     searchMagicpodArticles(),
