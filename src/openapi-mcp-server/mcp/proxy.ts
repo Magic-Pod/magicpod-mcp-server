@@ -55,7 +55,7 @@ export class MCPProxy {
     private otherTools: OtherToolDefinition<any>[],
   ) {
     this.server = new Server(
-      { name, version: "0.1.4" },
+      { name, version: "0.1.5" },
       { capabilities: { tools: {} } },
     );
     const baseUrl = openApiSpec.servers?.[0].url;
