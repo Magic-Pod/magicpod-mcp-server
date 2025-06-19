@@ -23,6 +23,7 @@ const getOpenApiSpec = async (schemaUrl: string): Promise<OpenAPIV3.Document> =>
     });
   } catch (error) {
     console.error("Failed to parse OpenAPI spec:", (error as Error).message);
+    console.error(error);
     process.exit(1);
   }
 };
