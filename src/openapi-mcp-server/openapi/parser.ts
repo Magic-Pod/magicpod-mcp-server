@@ -49,6 +49,124 @@ export class OpenAPIToMCPConverter {
   }
 
   /**
+   * Inline all $ref references in a schema by replacing them with their actual definitions.
+   * Handles circular references by detecting cycles and breaking them with simplified schemas.
+   */
+  private inlineAllRefs(
+    schema: IJsonSchema,
+    resolutionStack: Set<string> = new Set(),
+    inlinedCache: Map<string, IJsonSchema> = new Map()
+  ): IJsonSchema {
+    if (!schema || typeof schema !== "object") {
+      return schema;
+    }
+
+    // Handle $ref references
+    if ("$ref" in schema && typeof schema.$ref === "string") {
+      const ref = schema.$ref;
+      
+      // Check for circular reference
+      if (resolutionStack.has(ref)) {
+        console.warn(`Circular reference detected for ${ref}, using simplified schema`);
+        return { 
+          type: "object", 
+          description: `Circular reference to ${ref}`,
+          additionalProperties: true 
+        };
+      }
+
+      // Check cache first
+      if (inlinedCache.has(ref)) {
+        return inlinedCache.get(ref)!;
+      }
+
+      // Convert #/$defs/ references back to #/components/schemas/ for resolution
+      let resolveRef = ref;
+      if (ref.startsWith("#/$defs/")) {
+        resolveRef = ref.replace(/^#\/\$defs\//, "#/components/schemas/");
+      }
+
+      // Resolve the reference
+      const resolved = this.internalResolveRef(resolveRef, new Set());
+      if (!resolved) {
+        console.error(`Failed to resolve reference ${ref} (tried as ${resolveRef})`);
+        return { 
+          type: "object", 
+          description: `Unresolved reference: ${ref}`,
+          additionalProperties: true 
+        };
+      }
+
+      // Convert and inline recursively
+      resolutionStack.add(ref);
+      const convertedResolved = this.convertOpenApiSchemaToJsonSchema(resolved, new Set(), true);
+      const inlinedResolved = this.inlineAllRefs(convertedResolved, resolutionStack, inlinedCache);
+      resolutionStack.delete(ref);
+
+      // Preserve description from the original $ref if it exists
+      if (schema.description && !inlinedResolved.description) {
+        inlinedResolved.description = schema.description;
+      }
+
+      // Cache the result
+      inlinedCache.set(ref, inlinedResolved);
+      return inlinedResolved;
+    }
+
+    // Handle arrays
+    if (schema.type === "array" && schema.items) {
+      return {
+        ...schema,
+        items: this.inlineAllRefs(schema.items as IJsonSchema, resolutionStack, inlinedCache)
+      };
+    }
+
+    // Handle objects with properties
+    if (schema.type === "object" && schema.properties) {
+      const inlinedProperties: Record<string, IJsonSchema> = {};
+      for (const [key, value] of Object.entries(schema.properties)) {
+        inlinedProperties[key] = this.inlineAllRefs(value as IJsonSchema, resolutionStack, inlinedCache);
+      }
+      
+      const result = { ...schema, properties: inlinedProperties };
+      
+      // Handle additionalProperties
+      if (schema.additionalProperties && typeof schema.additionalProperties === "object") {
+        result.additionalProperties = this.inlineAllRefs(
+          schema.additionalProperties as IJsonSchema, 
+          resolutionStack, 
+          inlinedCache
+        );
+      }
+      
+      return result;
+    }
+
+    // Handle oneOf, anyOf, allOf
+    if (schema.oneOf) {
+      return {
+        ...schema,
+        oneOf: schema.oneOf.map(s => this.inlineAllRefs(s as IJsonSchema, resolutionStack, inlinedCache))
+      };
+    }
+    if (schema.anyOf) {
+      return {
+        ...schema,
+        anyOf: schema.anyOf.map(s => this.inlineAllRefs(s as IJsonSchema, resolutionStack, inlinedCache))
+      };
+    }
+    if (schema.allOf) {
+      return {
+        ...schema,
+        allOf: schema.allOf.map(s => this.inlineAllRefs(s as IJsonSchema, resolutionStack, inlinedCache))
+      };
+    }
+
+    // Return schema as-is if no special handling needed
+    return schema;
+  }
+
+  /**
    * Convert an OpenAPI schema (or reference) into a JSON Schema object.
    * Uses caching and handles cycles by returning $ref nodes.
    */
@@ -339,6 +457,103 @@ export class OpenAPIToMCPConverter {
     }
     return schema;
   }
+
+  /**
+   * Create a fully inlined schema without any $ref or $defs for Gemini CLI compatibility
+   */
+  private createInlinedSchema(
+    operation: OpenAPIV3.OperationObject,
+    method: string,
+    path: string,
+  ): IJsonSchema & { type: "object" } {
+    // First create the schema with $defs
+    const schemaWithRefs: IJsonSchema & { type: "object" } = {
+      $defs: this.convertComponentsToJsonSchema(),
+      type: "object",
+      properties: {},
+      required: [],
+    };
+
+    // Handle parameters (path, query, header, cookie)
+    if (operation.parameters) {
+      for (const param of operation.parameters) {
+        const paramObj = this.resolveParameter(param);
+        if (paramObj && paramObj.schema) {
+          const schema = this.convertOpenApiSchemaToJsonSchema(
+            paramObj.schema,
+            new Set(),
+            false,
+          );
+          // Merge parameter-level description if available
+          if (paramObj.description) {
+            schema.description = paramObj.description;
+          }
+          schemaWithRefs.properties![paramObj.name] = schema;
+          if (paramObj.required) {
+            schemaWithRefs.required!.push(paramObj.name);
+          }
+        }
+      }
+    }
+
+    // Handle requestBody
+    if (operation.requestBody) {
+      const bodyObj = this.resolveRequestBody(operation.requestBody);
+      if (bodyObj?.content) {
+        // Handle multipart/form-data for file uploads
+        if (bodyObj.content["multipart/form-data"]?.schema) {
+          const formSchema = this.convertOpenApiSchemaToJsonSchema(
+            bodyObj.content["multipart/form-data"].schema,
+            new Set(),
+            false,
+          );
+          if (formSchema.type === "object" && formSchema.properties) {
+            for (const [name, propSchema] of Object.entries(
+              formSchema.properties,
+            )) {
+              schemaWithRefs.properties![name] = propSchema;
+            }
+            if (formSchema.required) {
+              schemaWithRefs.required!.push(...formSchema.required!);
+            }
+          }
+        }
+        // Handle application/json
+        else if (bodyObj.content["application/json"]?.schema) {
+          const bodySchema = this.convertOpenApiSchemaToJsonSchema(
+            bodyObj.content["application/json"].schema,
+            new Set(),
+            false,
+          );
+          // Merge body schema into the inputSchema's properties
+          if (bodySchema.type === "object" && bodySchema.properties) {
+            for (const [name, propSchema] of Object.entries(
+              bodySchema.properties,
+            )) {
+              schemaWithRefs.properties![name] = propSchema;
+            }
+            if (bodySchema.required) {
+              schemaWithRefs.required!.push(...bodySchema.required!);
+            }
+          } else {
+            // If the request body is not an object, just put it under "body"
+            schemaWithRefs.properties!["body"] = bodySchema;
+            schemaWithRefs.required!.push("body");
+          }
+        }
+      }
+    }
+
+    // Now inline all references and remove $defs
+    const inlinedSchema = this.inlineAllRefs(schemaWithRefs);
+    
+    // Ensure we remove $defs completely for Gemini CLI compatibility
+    if ("$defs" in inlinedSchema) {
+      delete inlinedSchema["$defs"];
+    }
+
+    return inlinedSchema as IJsonSchema & { type: "object" };
+  }
   /**
    * Helper method to convert an operation to a JSON Schema for parameters
    */
@@ -476,84 +691,8 @@ export class OpenAPIToMCPConverter {
 
     const methodName = operation.operationId.replaceAll("\.", "_");
 
-    const inputSchema: IJsonSchema & { type: "object" } = {
-      $defs: this.convertComponentsToJsonSchema(),
-      type: "object",
-      properties: {},
-      required: [],
-    };
-
-    // Handle parameters (path, query, header, cookie)
-    if (operation.parameters) {
-      for (const param of operation.parameters) {
-        const paramObj = this.resolveParameter(param);
-        if (paramObj && paramObj.schema) {
-          const schema = this.convertOpenApiSchemaToJsonSchema(
-            paramObj.schema,
-            new Set(),
-            false,
-          );
-          // Merge parameter-level description if available
-          if (paramObj.description) {
-            schema.description = paramObj.description;
-          }
-          inputSchema.properties![paramObj.name] = schema;
-          if (paramObj.required) {
-            inputSchema.required!.push(paramObj.name);
-          }
-        }
-      }
-    }
-
-    // Handle requestBody
-    if (operation.requestBody) {
-      const bodyObj = this.resolveRequestBody(operation.requestBody);
-      if (bodyObj?.content) {
-        // Handle multipart/form-data for file uploads
-        // We convert the multipart/form-data schema to a JSON schema and we require
-        // that the user passes in a string for each file that points to the local file
-        if (bodyObj.content["multipart/form-data"]?.schema) {
-          const formSchema = this.convertOpenApiSchemaToJsonSchema(
-            bodyObj.content["multipart/form-data"].schema,
-            new Set(),
-            false,
-          );
-          if (formSchema.type === "object" && formSchema.properties) {
-            for (const [name, propSchema] of Object.entries(
-              formSchema.properties,
-            )) {
-              inputSchema.properties![name] = propSchema;
-            }
-            if (formSchema.required) {
-              inputSchema.required!.push(...formSchema.required!);
-            }
-          }
-        }
-        // Handle application/json
-        else if (bodyObj.content["application/json"]?.schema) {
-          const bodySchema = this.convertOpenApiSchemaToJsonSchema(
-            bodyObj.content["application/json"].schema,
-            new Set(),
-            false,
-          );
-          // Merge body schema into the inputSchema's properties
-          if (bodySchema.type === "object" && bodySchema.properties) {
-            for (const [name, propSchema] of Object.entries(
-              bodySchema.properties,
-            )) {
-              inputSchema.properties![name] = propSchema;
-            }
-            if (bodySchema.required) {
-              inputSchema.required!.push(...bodySchema.required!);
-            }
-          } else {
-            // If the request body is not an object, just put it under "body"
-            inputSchema.properties!["body"] = bodySchema;
-            inputSchema.required!.push("body");
-          }
-        }
-      }
-    }
+    // Use the inlined schema method for Gemini CLI compatibility
+    const inputSchema = this.createInlinedSchema(operation, method, path);
 
     // Build description including error responses
     let description = operation.summary || operation.description || "";
