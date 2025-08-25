@@ -35,15 +35,16 @@ export const searchMagicpodArticles = () => {
         .describe("Query's and search target's locale"),
     }),
     handleRequest: async ({ query, locale }) => {
+      query += ' -label:release';
       const response = await makeRequest(query, locale);
       // The response has "body" field, but it is too large for LLM
       // So, such large or insignificant fields are filtered here
       response.results = response.results.map((r: any) => ({
-        id: r.id,
-        title: r.title,
-        content_tag_ids: r.content_tag_ids,
-        label_names: r.label_names,
-      }));
+          id: r.id,
+          title: r.title,
+          content_tag_ids: r.content_tag_ids,
+          label_names: r.label_names,
+        }));
       return {
         content: [
           {
