@@ -4,14 +4,12 @@ import {
   OtherToolDefinition,
 } from "../openapi-mcp-server/mcp/proxy.js";
 import swagger2openapi from "swagger2openapi";
+import axios from "axios";
 
 const getOpenApiSpec = async (schemaUrl: string): Promise<OpenAPIV3.Document> => {
   try {
-    const response = await fetch(schemaUrl);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const openApiV2Spec = await response.json() as OpenAPIV2.Document;
+    const response = await axios.get(schemaUrl);
+    const openApiV2Spec = response.data as OpenAPIV2.Document;
     return new Promise((resolve, reject) => {
       swagger2openapi.convertObj(openApiV2Spec, {}, (err, options) => {
         if (err) {

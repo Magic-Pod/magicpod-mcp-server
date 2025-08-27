@@ -1,17 +1,16 @@
 import { z } from "zod";
 import { OtherToolDefinition } from "../openapi-mcp-server/mcp/proxy.js";
+import axios from "axios";
 
 const makeRequest = async (query: string, locale: "ja" | "en-us") => {
-  const headers = {
-    Accept: "application/json",
-  };
   try {
     const url = `https://trident-qa.zendesk.com/api/v2/help_center/articles/search.json?query=${query}&locale=${locale}`;
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return await response.json();
+    const response = await axios.get(url, {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+    return response.data;
   } catch (error) {
     console.error("Error making request:", error);
     return null;
