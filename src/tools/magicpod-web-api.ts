@@ -8,7 +8,7 @@ import axios from "axios";
 
 const getOpenApiSpec = async (schemaUrl: string): Promise<OpenAPIV3.Document> => {
   try {
-    const response = await axios.get(schemaUrl);
+    const response = await axios.get(schemaUrl, { headers: { "Accept": "*/*" } });
     const openApiV2Spec = response.data as OpenAPIV2.Document;
     return new Promise((resolve, reject) => {
       swagger2openapi.convertObj(openApiV2Spec, {}, (err, options) => {
