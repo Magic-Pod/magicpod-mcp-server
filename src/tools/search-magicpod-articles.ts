@@ -1,15 +1,22 @@
 import { z } from "zod";
 import { OtherToolDefinition } from "../openapi-mcp-server/mcp/proxy.js";
-import axios from "axios";
+import { HttpsProxyAgent } from "https-proxy-agent";
+import axios, { AxiosRequestConfig } from "axios";
 
 const makeRequest = async (query: string, locale: "ja" | "en-us") => {
   try {
     const url = `https://trident-qa.zendesk.com/api/v2/help_center/articles/search.json?query=${query}&locale=${locale}`;
-    const response = await axios.get(url, {
+    const config: AxiosRequestConfig = {
+      proxy: false, // Disable axios's broken proxy handling
       headers: {
         Accept: "application/json",
       },
-    });
+    };
+    const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+    if (httpsProxy) {
+      config.httpsAgent = new HttpsProxyAgent(httpsProxy);
+    }
+    const response = await axios.get(url, config);
     return response.data;
   } catch (error) {
     console.error("Error making request:", error);

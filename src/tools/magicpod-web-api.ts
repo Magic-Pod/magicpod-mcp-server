@@ -4,11 +4,24 @@ import {
   OtherToolDefinition,
 } from "../openapi-mcp-server/mcp/proxy.js";
 import swagger2openapi from "swagger2openapi";
-import axios from "axios";
+import { HttpsProxyAgent } from "https-proxy-agent";
+import { HttpProxyAgent } from "http-proxy-agent";
+import axios, { AxiosRequestConfig } from "axios";
 
 const getOpenApiSpec = async (schemaUrl: string): Promise<OpenAPIV3.Document> => {
   try {
-    const response = await axios.get(schemaUrl, { headers: { "Accept": "*/*" } });
+    const config: AxiosRequestConfig = {
+      proxy: false, // Disable axios's broken proxy handling
+    };
+    const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+    if (httpsProxy && schemaUrl.startsWith('https://')) {
+      config.httpsAgent = new HttpsProxyAgent(httpsProxy);
+    }
+    const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;
+    if (httpProxy && schemaUrl.startsWith('http://')) {
+      config.httpAgent = new HttpProxyAgent(httpProxy);
+    }
+    const response = await axios.get(schemaUrl, config);
     const openApiV2Spec = response.data as OpenAPIV2.Document;
     return new Promise((resolve, reject) => {
       swagger2openapi.convertObj(openApiV2Spec, {}, (err, options) => {
