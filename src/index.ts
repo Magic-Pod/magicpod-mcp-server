@@ -2,6 +2,9 @@
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { Command } from "commander";
+import axios from "axios";
+import { HttpsProxyAgent } from "https-proxy-agent";
+import { HttpProxyAgent } from "http-proxy-agent";
 import { searchMagicpodArticles } from "./tools/search-magicpod-articles.js";
 import { readMagicpodArticle } from "./tools/read-magicpod-article.js";
 import { initMagicPodApiProxy } from "./tools/magicpod-web-api.js";
@@ -22,6 +25,16 @@ if (!options.apiToken) {
 async function main() {
   const baseUrlEnvironmentVariable = options.debug ? process.env.BASE_URL : undefined;
   const baseUrl = baseUrlEnvironmentVariable || "https://app.magicpod.com";
+  // Disable axios's broken proxy handling and set the default config
+  axios.defaults.proxy = false;
+  const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+  if (httpsProxy) {
+    axios.defaults.httpsAgent = new HttpsProxyAgent(httpsProxy);
+  }
+  const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;
+  if (httpProxy) {
+    axios.defaults.httpAgent = new HttpProxyAgent(httpProxy);
+  }
   const proxy = await initMagicPodApiProxy(baseUrl, options.apiToken, [
     apiV1_0UploadFileCreate(baseUrl, options.apiToken),
     apiV1_0UploadDataPatterns(baseUrl, options.apiToken),
