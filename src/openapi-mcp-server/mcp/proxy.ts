@@ -1,9 +1,9 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
-  CallToolRequestSchema,
+  CallToolRequestSchema, CallToolResult,
   JSONRPCResponse,
   ListToolsRequestSchema,
-  Tool,
+  Tool
 } from "@modelcontextprotocol/sdk/types.js";
 import { JSONSchema7 as IJsonSchema } from "json-schema";
 import { OpenAPIToMCPConverter } from "../openapi/parser.js";
@@ -35,7 +35,7 @@ export type OtherToolDefinition<Args extends ZodRawShape> = {
   name: string;
   description: string;
   inputSchema: Args;
-  handleRequest: (args: Args) => ReturnType<ToolCallback<Args>>;
+  handleRequest: (args: Args) => Promise<CallToolResult>;
 };
 
 // import this class, extend and return server
