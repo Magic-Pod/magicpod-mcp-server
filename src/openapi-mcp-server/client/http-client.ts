@@ -1,5 +1,6 @@
 import type { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 import OpenAPIClientAxios from "openapi-client-axios";
+import axios from "axios";
 import type { AxiosInstance } from "axios";
 import FormData from "form-data";
 import fs from "fs";
@@ -40,6 +41,7 @@ export class HttpClient {
     this.client = new (OpenAPIClientAxios.default ?? OpenAPIClientAxios)({
       definition: openApiSpec,
       axiosConfigDefaults: {
+        ...axios.defaults,
         baseURL: config.baseUrl,
         headers: {
           "Content-Type": "application/json",
