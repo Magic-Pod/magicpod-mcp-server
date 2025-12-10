@@ -2,19 +2,28 @@ import { z } from "zod";
 import { OtherToolDefinition } from "../openapi-mcp-server/mcp/proxy.js";
 import axios from "axios";
 
-const testCaseTaskSchema = z.object({
+const testCaseCreateTaskSchema = z.object({
+  testCaseName: z
+    .string()
+    .min(1)
+    .describe("Test case name for the new test case to create"),
+  testSettingNumber: z
+    .number()
+    .int()
+    .positive()
+    .describe("Test setting number"),
+  prompt: z
+    .string()
+    .min(1)
+    .describe("User prompt describing the test scenario"),
+});
+
+const testCaseEditTaskSchema = z.object({
   testCaseNumber: z
     .number()
     .int()
     .positive()
-    .optional()
-    .describe(
-      "Test case number. If not provided, testCaseName must be provided",
-    ),
-  testCaseName: z
-    .string()
-    .optional()
-    .describe("Test case name. Required if testCaseNumber is not provided"),
+    .describe("Test case number to edit"),
   testSettingNumber: z
     .number()
     .int()
@@ -33,79 +42,59 @@ export const apiV1_0CreateAutopilotTasks = (
   return {
     name: "API-v1_0_create-autopilot-tasks",
     description:
-      "Create autopilot tasks for test case editing/creation. Each task instructs Autopilot to edit an existing test case or create a new one based on the provided prompt.",
-    inputSchema: z.object({
-      organizationName: z.string().describe("The organization name"),
-      projectName: z.string().describe("The project name"),
-      testCaseTasks: z
-        .array(testCaseTaskSchema)
-        .nonempty()
-        .describe("Array of test case tasks to create"),
-    }),
-    handleRequest: async ({ organizationName, projectName, testCaseTasks }) => {
+      "Create autopilot tasks for test case creation and/or editing. Provide testCaseCreateTasks to create new test cases, and/or testCaseEditTasks to edit existing ones based on the provided prompts. At least one of the task arrays must be provided.",
+    inputSchema: z
+      .object({
+        organizationName: z.string().describe("The organization name"),
+        projectName: z.string().describe("The project name"),
+        testCaseCreateTasks: z
+          .array(testCaseCreateTaskSchema)
+          .optional()
+          .describe("Array of test cases to create (optional)"),
+        testCaseEditTasks: z
+          .array(testCaseEditTaskSchema)
+          .optional()
+          .describe("Array of test cases to edit (optional)"),
+      })
+      .refine(
+        (data) => {
+          const hasCreateTasks =
+            data.testCaseCreateTasks && data.testCaseCreateTasks.length > 0;
+          const hasEditTasks =
+            data.testCaseEditTasks && data.testCaseEditTasks.length > 0;
+          return hasCreateTasks || hasEditTasks;
+        },
+        {
+          message:
+            "At least one of testCaseCreateTasks or testCaseEditTasks must be provided and non-empty",
+          path: ["testCaseCreateTasks"],
+        },
+      ),
+    handleRequest: async ({
+      organizationName,
+      projectName,
+      testCaseCreateTasks,
+      testCaseEditTasks,
+    }) => {
       try {
-        // Validate conditional requirements
-        for (let i = 0; i < testCaseTasks.length; i++) {
-          const task = testCaseTasks[i];
-
-          // Exactly one of testCaseNumber or testCaseName must be provided, not both
-          if (task.testCaseNumber && task.testCaseName) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify({
-                    error: `Task ${i + 1}: Cannot specify both testCaseNumber and testCaseName. Provide only one.`,
-                    status: "validation_error",
-                  }),
-                },
-              ],
-            };
-          }
-
-          if (!task.testCaseNumber && !task.testCaseName) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify({
-                    error: `Task ${i + 1}: Either testCaseNumber or testCaseName must be provided`,
-                    status: "validation_error",
-                  }),
-                },
-              ],
-            };
-          }
-
-          if (!task.testCaseNumber && task.testCaseName?.trim().length === 0) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify({
-                    error: `Task ${i + 1}: Provided testCaseName is empty. Either testCaseNumber or testCaseName must be provided and non-empty.`,
-                    status: "validation_error",
-                  }),
-                },
-              ],
-            };
-          }
-        }
-
         // Transform request data (camelCase to snake_case)
         const requestBody = {
-          test_case_tasks: testCaseTasks.map(
-            (task: z.infer<typeof testCaseTaskSchema>) => ({
-              ...(task.testCaseNumber !== undefined && {
-                test_case_number: task.testCaseNumber,
-              }),
-              ...(task.testCaseName !== undefined && {
+          test_case_create_tasks:
+            testCaseCreateTasks?.map(
+              (task: z.infer<typeof testCaseCreateTaskSchema>) => ({
                 test_case_name: task.testCaseName.trim(),
+                test_setting_number: task.testSettingNumber,
+                prompt: task.prompt.trim(),
               }),
-              test_setting_number: task.testSettingNumber,
-              prompt: task.prompt.trim(),
-            }),
-          ),
+            ) || [],
+          test_case_edit_tasks:
+            testCaseEditTasks?.map(
+              (task: z.infer<typeof testCaseEditTaskSchema>) => ({
+                test_case_number: task.testCaseNumber,
+                test_setting_number: task.testSettingNumber,
+                prompt: task.prompt.trim(),
+              }),
+            ) || [],
         };
 
         // Make HTTP POST request
@@ -175,22 +164,41 @@ export const apiV1_0CreateAutopilotTasks = (
         }
 
         // Handle success response
-        if (
-          response.status === 200 &&
-          response.data.results &&
-          response.data.url
-        ) {
+        if (response.status === 200) {
+          const createTasksCount = testCaseCreateTasks?.length || 0;
+          const editTasksCount = testCaseEditTasks?.length || 0;
+
+          const result: any = {
+            status: "success",
+            message: `Successfully processed ${createTasksCount} create task(s) and ${editTasksCount} edit task(s)`,
+          };
+
+          // Include create tasks response if requested
+          if (response.data.test_case_create_tasks) {
+            result.testCaseCreateTasks = {
+              url: response.data.test_case_create_tasks.url,
+            };
+          }
+
+          // Include edit tasks response if requested
+          if (response.data.test_case_edit_tasks?.test_cases) {
+            result.testCaseEditTasks = {
+              testCases: response.data.test_case_edit_tasks.test_cases.map(
+                (tc: any) => ({
+                  url: tc.url,
+                  number: tc.number,
+                }),
+              ),
+            };
+          }
+
+          result.note = "Monitor task progress at the provided URL(s)";
+
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify({
-                  status: "success",
-                  message: `Created ${response.data.results.length} autopilot task(s)`,
-                  task_ids: response.data.results,
-                  progress_url: `${baseUrl}${response.data.url}`,
-                  note: "Monitor task progress at the provided URL",
-                }),
+                text: JSON.stringify(result),
               },
             ],
           };
