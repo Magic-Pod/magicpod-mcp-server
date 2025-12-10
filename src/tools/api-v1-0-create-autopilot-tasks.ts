@@ -8,7 +8,9 @@ const testCaseTaskSchema = z.object({
     .int()
     .positive()
     .optional()
-    .describe("Test case number. If not provided, testCaseName must be provided"),
+    .describe(
+      "Test case number. If not provided, testCaseName must be provided",
+    ),
   testCaseName: z
     .string()
     .optional()
@@ -24,18 +26,17 @@ const testCaseTaskSchema = z.object({
     .describe("User prompt describing the test scenario"),
 });
 
-export const apiV1_0CreateAutopilotTasks = (baseUrl: string, apiToken: string) => {
+export const apiV1_0CreateAutopilotTasks = (
+  baseUrl: string,
+  apiToken: string,
+) => {
   return {
     name: "API-v1_0_create-autopilot-tasks",
     description:
       "Create autopilot tasks for test case editing/creation. Each task instructs Autopilot to edit an existing test case or create a new one based on the provided prompt.",
     inputSchema: z.object({
-      organizationName: z
-        .string()
-        .describe("The organization name"),
-      projectName: z
-        .string()
-        .describe("The project name"),
+      organizationName: z.string().describe("The organization name"),
+      projectName: z.string().describe("The project name"),
       testCaseTasks: z
         .array(testCaseTaskSchema)
         .nonempty()
@@ -93,16 +94,18 @@ export const apiV1_0CreateAutopilotTasks = (baseUrl: string, apiToken: string) =
 
         // Transform request data (camelCase to snake_case)
         const requestBody = {
-          test_case_tasks: testCaseTasks.map((task: z.infer<typeof testCaseTaskSchema>) => ({
-            ...(task.testCaseNumber !== undefined && {
-              test_case_number: task.testCaseNumber,
+          test_case_tasks: testCaseTasks.map(
+            (task: z.infer<typeof testCaseTaskSchema>) => ({
+              ...(task.testCaseNumber !== undefined && {
+                test_case_number: task.testCaseNumber,
+              }),
+              ...(task.testCaseName !== undefined && {
+                test_case_name: task.testCaseName.trim(),
+              }),
+              test_setting_number: task.testSettingNumber,
+              prompt: task.prompt.trim(),
             }),
-            ...(task.testCaseName !== undefined && {
-              test_case_name: task.testCaseName.trim(),
-            }),
-            test_setting_number: task.testSettingNumber,
-            prompt: task.prompt.trim(),
-          })),
+          ),
         };
 
         // Make HTTP POST request
@@ -122,7 +125,8 @@ export const apiV1_0CreateAutopilotTasks = (baseUrl: string, apiToken: string) =
             const status = error.response.status;
             const errorData = error.response.data;
 
-            let errorMessage = "An error occurred while creating autopilot tasks";
+            let errorMessage =
+              "An error occurred while creating autopilot tasks";
 
             if (status === 400) {
               if (errorData && typeof errorData === "object") {
@@ -131,7 +135,8 @@ export const apiV1_0CreateAutopilotTasks = (baseUrl: string, apiToken: string) =
                 errorMessage = `Invalid request with status ${status}: ${errorData}`;
               }
             } else if (status === 401) {
-              errorMessage = "Authentication failed. Please check your API token.";
+              errorMessage =
+                "Authentication failed. Please check your API token.";
             } else if (status === 403) {
               errorMessage = `Access denied. You don't have permission to create autopilot tasks in ${organizationName}/${projectName}.`;
             } else if (status === 404) {
@@ -153,7 +158,8 @@ export const apiV1_0CreateAutopilotTasks = (baseUrl: string, apiToken: string) =
             };
           } else {
             // Network or other error
-            const errorMessage = error.message || "Network error while creating autopilot tasks";
+            const errorMessage =
+              error.message || "Network error while creating autopilot tasks";
             return {
               content: [
                 {
@@ -169,7 +175,11 @@ export const apiV1_0CreateAutopilotTasks = (baseUrl: string, apiToken: string) =
         }
 
         // Handle success response
-        if (response.status === 200 && response.data.results && response.data.url) {
+        if (
+          response.status === 200 &&
+          response.data.results &&
+          response.data.url
+        ) {
           return {
             content: [
               {
