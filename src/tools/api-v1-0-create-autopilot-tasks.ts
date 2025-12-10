@@ -83,7 +83,7 @@ export const apiV1_0CreateAutopilotTasks = (
                 {
                   type: "text",
                   text: JSON.stringify({
-                    error: `Task ${i + 1}: testCaseName cannot be empty when testCaseNumber is not provided`,
+                    error: `Task ${i + 1}: Provided testCaseName is empty. Either testCaseNumber or testCaseName must be provided and non-empty.`,
                     status: "validation_error",
                   }),
                 },
