@@ -25,6 +25,10 @@ if (!options.apiToken) {
 async function main() {
   const baseUrlEnvironmentVariable = options.debug ? process.env.BASE_URL : undefined;
   const baseUrl = baseUrlEnvironmentVariable || "https://app.magicpod.com";
+  // Log environment variables for debugging proxy issues
+  console.error("[proxy-1217] === Proxy Configuration (Startup) ===");
+  console.error("[proxy-1217] HTTPS_PROXY:", process.env.HTTPS_PROXY || "(not set)");
+  console.error("[proxy-1217] HTTP_PROXY:", process.env.HTTP_PROXY || "(not set)");
   // Disable axios's broken proxy handling and set the default config
   axios.defaults.proxy = false;
   const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy;
@@ -35,6 +39,7 @@ async function main() {
   if (httpProxy) {
     axios.defaults.httpAgent = new HttpProxyAgent(httpProxy);
   }
+  console.error("[proxy-1217] === Proxy Configuration Complete ===");
   const proxy = await initMagicPodApiProxy(baseUrl, options.apiToken, [
     apiV1_0UploadFileCreate(baseUrl, options.apiToken),
     apiV1_0UploadDataPatterns(baseUrl, options.apiToken),

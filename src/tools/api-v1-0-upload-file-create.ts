@@ -159,6 +159,10 @@ export const apiV1_0UploadFileCreate = (baseUrl: string, apiToken: string) => {
         formData.append("file", fileStream, fileName);
 
         const url = `${baseUrl}/api/v1.0/${organizationName}/${projectName}/upload-file/`;
+        console.error("[proxy-1217] About to upload file to:", url);
+        console.error("[proxy-1217] axios.defaults.proxy:", axios.defaults.proxy);
+        console.error("[proxy-1217] axios.defaults.httpsAgent:", axios.defaults.httpsAgent ? "configured" : "not configured");
+        console.error("[proxy-1217] axios.defaults.httpAgent:", axios.defaults.httpAgent ? "configured" : "not configured");
         const response = await axios.post(url, formData, {
           headers: {
             ...formData.getHeaders(),

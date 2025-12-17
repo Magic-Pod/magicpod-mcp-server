@@ -8,6 +8,10 @@ import axios from "axios";
 
 const getOpenApiSpec = async (schemaUrl: string): Promise<OpenAPIV3.Document> => {
   try {
+    console.error("[proxy-1217] About to fetch OpenAPI spec from:", schemaUrl);
+    console.error("[proxy-1217] axios.defaults.proxy:", axios.defaults.proxy);
+    console.error("[proxy-1217] axios.defaults.httpsAgent:", axios.defaults.httpsAgent ? "configured" : "not configured");
+    console.error("[proxy-1217] axios.defaults.httpAgent:", axios.defaults.httpAgent ? "configured" : "not configured");
     const response = await axios.get(schemaUrl, { headers: { "Accept": "*/*" } });
     const openApiV2Spec = response.data as OpenAPIV2.Document;
     return new Promise((resolve, reject) => {

@@ -19,6 +19,10 @@ const checkBatchTaskStatus = async (
   const url = `${baseUrl}/api/v1.0/${organizationName}/${projectName}/batch-task/${batchTaskId}/`;
   
   try {
+    console.error("[proxy-1217] About to check batch task status:", url);
+    console.error("[proxy-1217] axios.defaults.proxy:", axios.defaults.proxy);
+    console.error("[proxy-1217] axios.defaults.httpsAgent:", axios.defaults.httpsAgent ? "configured" : "not configured");
+    console.error("[proxy-1217] axios.defaults.httpAgent:", axios.defaults.httpAgent ? "configured" : "not configured");
     const response = await axios.get(url, {
       headers: {
         Authorization: `Token ${apiToken}`,
@@ -198,6 +202,10 @@ export const apiV1_0UploadDataPatterns = (baseUrl: string, apiToken: string) => 
         let response;
         
         try {
+          console.error("[proxy-1217] About to upload CSV to:", url);
+          console.error("[proxy-1217] axios.defaults.proxy:", axios.defaults.proxy);
+          console.error("[proxy-1217] axios.defaults.httpsAgent:", axios.defaults.httpsAgent ? "configured" : "not configured");
+          console.error("[proxy-1217] axios.defaults.httpAgent:", axios.defaults.httpAgent ? "configured" : "not configured");
           response = await axios.post(url, formData, {
             headers: {
               ...formData.getHeaders(),

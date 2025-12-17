@@ -182,6 +182,12 @@ export class HttpClient {
         requestConfig,
       });
 
+      // Log axios defaults before operation execution
+      console.error("[proxy-1217] About to execute operation:", operationId);
+      console.error("[proxy-1217] axios.defaults.proxy:", axios.defaults.proxy);
+      console.error("[proxy-1217] axios.defaults.httpsAgent:", axios.defaults.httpsAgent ? "configured" : "not configured");
+      console.error("[proxy-1217] axios.defaults.httpAgent:", axios.defaults.httpAgent ? "configured" : "not configured");
+
       // `body` attribute is somehow included in an actual request
       if ("body" in bodyParams) {
         bodyParams = bodyParams.body;
