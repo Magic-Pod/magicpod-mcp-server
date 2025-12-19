@@ -122,7 +122,9 @@ export const apiV1_0CreateAutopilotTasks = (
               (task: z.infer<typeof testCaseCreateTaskSchema>) => ({
                 test_case_name: task.testCaseName.trim(),
                 test_setting_number: task.testSettingNumber,
-                ...(task.testSettingPatternName && { test_setting_pattern_name: task.testSettingPatternName.trim() }),
+                ...(task.testSettingPatternName && {
+                  test_setting_pattern_name: task.testSettingPatternName.trim(),
+                }),
                 prompt: task.prompt.trim(),
               }),
             ) || [],
@@ -131,7 +133,9 @@ export const apiV1_0CreateAutopilotTasks = (
               (task: z.infer<typeof testCaseEditTaskSchema>) => ({
                 test_case_number: task.testCaseNumber,
                 test_setting_number: task.testSettingNumber,
-                ...(task.testSettingPatternName && { test_setting_pattern_name: task.testSettingPatternName.trim() }),
+                ...(task.testSettingPatternName && {
+                  test_setting_pattern_name: task.testSettingPatternName.trim(),
+                }),
                 prompt: task.prompt.trim(),
               }),
             ) || [],
