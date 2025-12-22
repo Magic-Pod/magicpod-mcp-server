@@ -16,7 +16,7 @@ const testCaseCreateTaskSchema = z.object({
         "This parameter is mandatory. " +
         "If you do not have this value, you MUST stop and ask the user for it before calling this tool.",
     ),
-  testSettingPatternName: z
+  testSettingsPatternName: z
     .string()
     .min(1)
     .optional()
@@ -50,7 +50,7 @@ const testCaseEditTaskSchema = z.object({
         "This parameter is mandatory. " +
         "If you do not have this value, you MUST stop and ask the user for it before calling this tool.",
     ),
-  testSettingPatternName: z
+  testSettingsPatternName: z
     .string()
     .min(1)
     .optional()
@@ -122,8 +122,8 @@ export const apiV1_0CreateAutopilotTasks = (
               (task: z.infer<typeof testCaseCreateTaskSchema>) => ({
                 test_case_name: task.testCaseName.trim(),
                 test_settings_number: task.testSettingsNumber,
-                ...(task.testSettingPatternName && {
-                  test_setting_pattern_name: task.testSettingPatternName.trim(),
+                ...(task.testSettingsPatternName && {
+                  test_settings_pattern_name: task.testSettingsPatternName.trim(),
                 }),
                 prompt: task.prompt.trim(),
               }),
@@ -133,8 +133,8 @@ export const apiV1_0CreateAutopilotTasks = (
               (task: z.infer<typeof testCaseEditTaskSchema>) => ({
                 test_case_number: task.testCaseNumber,
                 test_settings_number: task.testSettingsNumber,
-                ...(task.testSettingPatternName && {
-                  test_setting_pattern_name: task.testSettingPatternName.trim(),
+                ...(task.testSettingsPatternName && {
+                  test_settings_pattern_name: task.testSettingsPatternName.trim(),
                 }),
                 prompt: task.prompt.trim(),
               }),
