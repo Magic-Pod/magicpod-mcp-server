@@ -7,16 +7,16 @@ const testCaseCreateTaskSchema = z.object({
     .string()
     .min(1)
     .describe("Test case name for the new test case to create"),
-  testSettingNumber: z
+  testSettingsNumber: z
     .number()
     .int()
     .positive()
     .describe(
-      "Test setting number that defines the test configuration (device type, browser version, screen size, etc.). " +
+      "Test settings number that defines the test configuration (device type, browser version, screen size, etc.). " +
         "This parameter is mandatory. " +
         "If you do not have this value, you MUST stop and ask the user for it before calling this tool.",
     ),
-  testSettingPatternName: z
+  testSettingsPatternName: z
     .string()
     .min(1)
     .optional()
@@ -41,16 +41,16 @@ const testCaseEditTaskSchema = z.object({
     .int()
     .positive()
     .describe("Test case number to edit"),
-  testSettingNumber: z
+  testSettingsNumber: z
     .number()
     .int()
     .positive()
     .describe(
-      "Test setting number that defines the test configuration (device type, browser version, screen size, etc.). " +
+      "Test settings number that defines the test configuration (device type, browser version, screen size, etc.). " +
         "This parameter is mandatory. " +
         "If you do not have this value, you MUST stop and ask the user for it before calling this tool.",
     ),
-  testSettingPatternName: z
+  testSettingsPatternName: z
     .string()
     .min(1)
     .optional()
@@ -121,9 +121,9 @@ export const apiV1_0CreateAutopilotTasks = (
             testCaseCreateTasks?.map(
               (task: z.infer<typeof testCaseCreateTaskSchema>) => ({
                 test_case_name: task.testCaseName.trim(),
-                test_setting_number: task.testSettingNumber,
-                ...(task.testSettingPatternName && {
-                  test_setting_pattern_name: task.testSettingPatternName.trim(),
+                test_settings_number: task.testSettingsNumber,
+                ...(task.testSettingsPatternName && {
+                  test_settings_pattern_name: task.testSettingsPatternName.trim(),
                 }),
                 prompt: task.prompt.trim(),
               }),
@@ -132,9 +132,9 @@ export const apiV1_0CreateAutopilotTasks = (
             testCaseEditTasks?.map(
               (task: z.infer<typeof testCaseEditTaskSchema>) => ({
                 test_case_number: task.testCaseNumber,
-                test_setting_number: task.testSettingNumber,
-                ...(task.testSettingPatternName && {
-                  test_setting_pattern_name: task.testSettingPatternName.trim(),
+                test_settings_number: task.testSettingsNumber,
+                ...(task.testSettingsPatternName && {
+                  test_settings_pattern_name: task.testSettingsPatternName.trim(),
                 }),
                 prompt: task.prompt.trim(),
               }),
