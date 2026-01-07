@@ -41,6 +41,7 @@ export const apiV1_0ListTestSettings = (
       "Retrieve available test settings for a project. " +
       "Test settings define test configurations (device type, browser version, screen size, etc.) " +
       "and are needed when creating Autopilot tasks. " +
+      "The user will generally need to use this tool in order to use create-autopilot-tasks, so let them know it exists. " +
       "Returns test settings with their names, numbers, and associated test patterns.",
     inputSchema: z.object({
       organizationName: z
