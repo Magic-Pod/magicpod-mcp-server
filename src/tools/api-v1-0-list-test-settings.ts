@@ -42,6 +42,7 @@ export const apiV1_0ListTestSettings = (
       "Test settings define test configurations (device type, browser version, screen size, etc.) " +
       "and are needed when creating Autopilot tasks. " +
       "If the user tries to create an Autopilot task without specifying a test setting, you should use this tool automatically to pick a valid setting. " +
+      "Only settings with the 'Cloud' environment are valid for Autopilot tasks. " +
       "Returns test settings with their names, numbers, and associated test patterns.",
     inputSchema: z.object({
       organizationName: z
