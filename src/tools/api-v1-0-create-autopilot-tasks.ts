@@ -83,8 +83,16 @@ export const apiV1_0CreateAutopilotTasks = (
       "At least one of the task arrays must be provided.",
     inputSchema: z
       .object({
-        organizationName: z.string().describe("The organization name"),
-        projectName: z.string().describe("The project name"),
+        organizationName: z
+          .string()
+          .describe(
+            `The organization name. Can be extracted when the user provides MagicPod URLs, which typically follow the structure: ${baseUrl}/{organizationName}/{projectName}/{...}`,
+          ),
+        projectName: z
+          .string()
+          .describe(
+            `The project name. Can be extracted when the user provides MagicPod URLs, which typically follow the structure: ${baseUrl}/{organizationName}/{projectName}/{...}`,
+          ),
         testCaseCreateTasks: z
           .array(testCaseCreateTaskSchema)
           .optional()
@@ -123,7 +131,8 @@ export const apiV1_0CreateAutopilotTasks = (
                 test_case_name: task.testCaseName.trim(),
                 test_settings_number: task.testSettingsNumber,
                 ...(task.testSettingsPatternName && {
-                  test_settings_pattern_name: task.testSettingsPatternName.trim(),
+                  test_settings_pattern_name:
+                    task.testSettingsPatternName.trim(),
                 }),
                 prompt: task.prompt.trim(),
               }),
@@ -134,7 +143,8 @@ export const apiV1_0CreateAutopilotTasks = (
                 test_case_number: task.testCaseNumber,
                 test_settings_number: task.testSettingsNumber,
                 ...(task.testSettingsPatternName && {
-                  test_settings_pattern_name: task.testSettingsPatternName.trim(),
+                  test_settings_pattern_name:
+                    task.testSettingsPatternName.trim(),
                 }),
                 prompt: task.prompt.trim(),
               }),
@@ -236,7 +246,8 @@ export const apiV1_0CreateAutopilotTasks = (
             };
           }
 
-          result.note = "Monitor task progress at the provided URL(s)";
+          result.note =
+            "Autopilot starts running in a few minutes. You can view created/edited test cases at the provided URL(s).";
 
           return {
             content: [

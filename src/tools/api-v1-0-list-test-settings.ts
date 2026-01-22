@@ -31,10 +31,7 @@ type GetProjectTestSettingsResponse = {
   test_settings: TestSetting[];
 };
 
-export const apiV1_0ListTestSettings = (
-  baseUrl: string,
-  apiToken: string,
-) => {
+export const apiV1_0ListTestSettings = (baseUrl: string, apiToken: string) => {
   return {
     name: "API-v1_0_list-test-settings",
     description:
@@ -43,18 +40,26 @@ export const apiV1_0ListTestSettings = (
       "and are needed when creating Autopilot tasks. " +
       "If the user tries to create an Autopilot task without specifying a test setting, you should use this tool automatically to pick a valid setting. " +
       "Only settings with the 'Cloud' environment are valid for Autopilot tasks. " +
+      "If the desired configuration cannot be found with includePrivate=false, use this tool again with includePrivate=true. " +
       "Returns test settings with their names, numbers, and associated test patterns.",
     inputSchema: z.object({
       organizationName: z
         .string()
-        .describe("The organization name (organization identifier)"),
-      projectName: z.string().describe("The project name (project identifier)"),
+        .describe(
+          `The organization name. Can be extracted when the user provides MagicPod URLs, which typically follow the structure: ${baseUrl}/{organizationName}/{projectName}/{...}`,
+        ),
+      projectName: z
+        .string()
+        .describe(
+          `The project name. Can be extracted when the user provides MagicPod URLs, which typically follow the structure: ${baseUrl}/{organizationName}/{projectName}/{...}`,
+        ),
       includePrivate: z
         .boolean()
         .optional()
         .default(false)
         .describe(
-          "Whether to include private test settings. By default, returns only shared settings.",
+          "Whether to include private test settings. " +
+            "Default is false (returns only shared settings). ",
         ),
     }),
     handleRequest: async ({
@@ -88,7 +93,7 @@ export const apiV1_0ListTestSettings = (
             } else if (status === 403) {
               errorMessage = `Access denied. You don't have permission to view test settings for ${organizationName}/${projectName}.`;
             } else if (status === 404) {
-              errorMessage = `Project ${organizationName}/${projectName} not found.`;
+              errorMessage = `Project ${organizationName}/${projectName} not found. Please verify the organization name and project name are correct.`;
             } else if (status === 400) {
               if (errorData && typeof errorData === "object") {
                 errorMessage = `Invalid request: ${JSON.stringify(errorData)}`;
