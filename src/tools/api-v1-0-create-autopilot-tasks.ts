@@ -40,7 +40,10 @@ const testCaseEditTaskSchema = z.object({
     .number()
     .int()
     .positive()
-    .describe("Test case number to edit"),
+    .describe(
+      "Test case number to edit.\n" +
+        "Do NOT use assumed or stale test case numbers, as this will cause the edit operation to fail or target the wrong test case.",
+    ),
   testSettingsNumber: z
     .number()
     .int()
@@ -100,7 +103,10 @@ export const apiV1_0CreateAutopilotTasks = (
         testCaseEditTasks: z
           .array(testCaseEditTaskSchema)
           .optional()
-          .describe("Array of test cases to edit (optional)"),
+          .describe(
+            "Array of test cases to edit (optional)\n" +
+              "Before editing test cases, retrieve the current test case list to obtain the correct test case numbers if they are not explicitly provided by the user. ",
+          ),
       })
       .refine(
         (data) => {
