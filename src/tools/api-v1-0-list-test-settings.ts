@@ -45,8 +45,14 @@ export const apiV1_0ListTestSettings = (baseUrl: string, apiToken: string) => {
     inputSchema: z.object({
       organizationName: z
         .string()
-        .describe("The organization name (organization identifier)"),
-      projectName: z.string().describe("The project name (project identifier)"),
+        .describe(
+          `The organization name. Can be extracted when the user provides MagicPod URLs, which typically follow the structure: ${baseUrl}/{organizationName}/{projectName}/{...}`,
+        ),
+      projectName: z
+        .string()
+        .describe(
+          `The project name. Can be extracted when the user provides MagicPod URLs, which typically follow the structure: ${baseUrl}/{organizationName}/{projectName}/{...}`,
+        ),
       includePrivate: z
         .boolean()
         .optional()
