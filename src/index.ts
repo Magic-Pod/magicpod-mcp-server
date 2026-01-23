@@ -26,10 +26,9 @@ if (!options.apiToken) {
 }
 
 async function main() {
-  let baseUrlEnvironmentVariable = options.debug ? process.env.BASE_URL : undefined;
-  if (baseUrlEnvironmentVariable?.endsWith("/")) {
-    baseUrlEnvironmentVariable = baseUrlEnvironmentVariable.slice(0, -1);
-  }
+  const baseUrlEnvironmentVariable = options.debug
+    ? process.env.BASE_URL?.replace(/\/$/, "")
+    : undefined;
   const baseUrl = baseUrlEnvironmentVariable || "https://app.magicpod.com";
   // Disable axios's broken proxy handling and set the default config
   axios.defaults.proxy = false;
