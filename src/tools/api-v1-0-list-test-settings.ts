@@ -38,9 +38,10 @@ export const apiV1_0ListTestSettings = (baseUrl: string, apiToken: string) => {
       "Retrieve available test settings for a project. " +
       "Test settings define test configurations (device type, browser version, screen size, etc.) " +
       "and are needed when creating Autopilot tasks. " +
-      "If the user tries to create an Autopilot task without specifying a test setting, you should use this tool automatically to pick a valid setting. " +
+      "If the user tries to create an Autopilot task without specifying a test setting, you MUST use this tool automatically to pick a valid setting. " +
+      "You may use information from the user's instructions and the autopilot prompts to choose settings that match the user's needs. " +
+      "For mobile tests, the settings contain information about the app being tested. " +
       "Only settings with the 'Cloud' environment are valid for Autopilot tasks. " +
-      "If the desired configuration cannot be found with includePrivate=false, use this tool again with includePrivate=true. " +
       "Returns test settings with their names, numbers, and associated test patterns.",
     inputSchema: z.object({
       organizationName: z
@@ -55,11 +56,9 @@ export const apiV1_0ListTestSettings = (baseUrl: string, apiToken: string) => {
         ),
       includePrivate: z
         .boolean()
-        .optional()
-        .default(false)
         .describe(
           "Whether to include private test settings. " +
-            "Default is false (returns only shared settings). ",
+            "Set it to true unless the user requests otherwise.",
         ),
     }),
     handleRequest: async ({
