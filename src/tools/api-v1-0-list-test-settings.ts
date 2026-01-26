@@ -39,7 +39,7 @@ export const apiV1_0ListTestSettings = (baseUrl: string, apiToken: string) => {
       "Test settings define test configurations (device type, browser version, screen size, etc.) " +
       "and are needed when creating Autopilot tasks. " +
       "If the user tries to create an Autopilot task without specifying a test setting, you MUST use this tool automatically to pick a valid setting. " +
-      "You may use information from the user's instructions and the autopilot prompts to choose settings that match the user's needs. " +
+      "You may use information from the user's instructions and the Autopilot prompts to choose settings that match the user's needs. " +
       "For mobile tests, the settings contain information about the app being tested. " +
       "Only settings with the 'Cloud' environment are valid for Autopilot tasks. " +
       "Returns test settings with their names, numbers, and associated test patterns.",
