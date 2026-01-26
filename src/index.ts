@@ -13,6 +13,7 @@ import { apiV1_0UploadDataPatterns } from "./tools/api-v1-0-upload-data-patterns
 import { featureFlags } from "./config/feature-flags.js";
 import { apiV1_0CreateAutopilotTasks } from "./tools/api-v1-0-create-autopilot-tasks.js";
 import { apiV1_0ListTestSettings } from "./tools/api-v1-0-list-test-settings.js";
+import { parseMagicpodUrl } from "./tools/parse-magicpod-url.js";
 
 const program = new Command();
 program.option("--api-token <key>", "MagicPod API token to use");
@@ -46,6 +47,7 @@ async function main() {
     apiV1_0ListTestSettings(baseUrl, options.apiToken),
     searchMagicpodArticles(),
     readMagicpodArticle(),
+    parseMagicpodUrl(),
     ...(featureFlags.enableAutopilotTasks
       ? [apiV1_0CreateAutopilotTasks(baseUrl, options.apiToken)]
       : []),
