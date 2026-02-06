@@ -1,6 +1,6 @@
 {
   "name": "magicpod-mcp-server",
-  "version": "0.1.11",
+  "version": "1.57.0",
   "description": "Model Context Protocol server for MagicPod integration",
   "type": "module",
   "bin": {
