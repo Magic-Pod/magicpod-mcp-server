@@ -115,6 +115,7 @@ export class MCPProxy {
           const inputSchema: typeof method.inputSchema = JSON.parse(JSON.stringify(method.inputSchema));
           this.removeDescriptions(inputSchema);
 
+
           tools.push({
             name: truncatedToolName,
             description: method.description,
