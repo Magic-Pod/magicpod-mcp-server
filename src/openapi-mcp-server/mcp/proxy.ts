@@ -1,10 +1,9 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
-  CallToolRequestSchema,
-  CallToolResult,
+  CallToolRequestSchema, CallToolResult,
   JSONRPCResponse,
   ListToolsRequestSchema,
-  Tool,
+  Tool
 } from "@modelcontextprotocol/sdk/types.js";
 import { JSONSchema7 as IJsonSchema } from "json-schema";
 import { OpenAPIToMCPConverter } from "../openapi/parser.js";
@@ -56,7 +55,7 @@ export class MCPProxy {
     private otherTools: OtherToolDefinition<any>[],
   ) {
     this.server = new Server(
-      { name, version: "1.56.0-rc2" },
+      { name, version: "1.57.0" },
       { capabilities: { tools: {} } },
     );
     const baseUrl = openApiSpec.servers?.[0].url;
@@ -99,6 +98,7 @@ export class MCPProxy {
     }
   }
 
+
   private setupHandlers() {
     // Handle tool listing
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -112,9 +112,7 @@ export class MCPProxy {
 
           // to reduce the tool list response size
           // TODO description is actually required
-          const inputSchema: typeof method.inputSchema = JSON.parse(
-            JSON.stringify(method.inputSchema),
-          );
+          const inputSchema: typeof method.inputSchema = JSON.parse(JSON.stringify(method.inputSchema));
           this.removeDescriptions(inputSchema);
 
           tools.push({
