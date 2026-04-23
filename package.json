@@ -29,9 +29,9 @@
   ],
   "dependencies": {
     "@anthropic-ai/sdk": "^0.33.1",
-    "@modelcontextprotocol/sdk": "^1.26.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/mustache": "^4.2.5",
-    "axios": "^1.15.0",
+    "axios": "^1.15.2",
     "commander": "^13.1.0",
     "form-data": "^4.0.4",
     "http-proxy-agent": "^7.0.2",
@@ -53,5 +53,9 @@
     "prettier": "^3.5.3",
     "typescript": "^5.8.3"
   },
-  "overrides": {}
+  "overrides": {
+    "follow-redirects": "^1.16.0",
+    "hono": "^4.12.14",
+    "@hono/node-server": "^2.0.0"
+  }
 }
