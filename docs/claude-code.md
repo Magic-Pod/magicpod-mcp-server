@@ -32,6 +32,8 @@ The following tools have custom names not derived from operationId:
 - `mcp__magicpod-mcp-server__read-magicpod-article`
 - `mcp__magicpod-mcp-server__API-v1_0_upload-file_create`
 - `mcp__magicpod-mcp-server__API-v1_0_upload-data-patterns_create`
+- `mcp__magicpod-mcp-server__API-v1_0_list-test-settings`
+- `mcp__magicpod-mcp-server__API-v1_0_create-autopilot-tasks`
 
 ### Discovering available operationIds
 
