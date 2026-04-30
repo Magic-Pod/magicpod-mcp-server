@@ -44,3 +44,7 @@ Build
 ```
 npm run build
 ```
+
+## Configuration
+
+[Configuring Tool Permissions in Claude Code](./docs/claude-code.md)
