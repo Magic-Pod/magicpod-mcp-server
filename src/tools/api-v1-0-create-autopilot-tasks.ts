@@ -38,7 +38,7 @@ const testCaseCreateTaskSchema = z.object({
     .optional()
     .describe(
       "Target platform for the new test case. Required for Mixed-platform " +
-        "projects; for single-platform projects, may be omitted or null " +
+        "projects; for single-platform projects, may be omitted " +
         "(defaults to the project platform), and if provided must match the " +
         "project platform. Valid values are 'mobile' and 'browser'. ",
     ),
