@@ -150,6 +150,7 @@ export const apiV1_0CreateAutopilotTasks = (
                     task.testSettingsPatternName.trim(),
                 }),
                 prompt: task.prompt.trim(),
+                ...(task.platform && { platform: task.platform }),
               }),
             ) || [],
           test_case_edit_tasks:
