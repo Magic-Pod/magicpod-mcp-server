@@ -33,6 +33,15 @@ const testCaseCreateTaskSchema = z.object({
         "For Browser platform projects, unless a URL is already specified in the test case, " +
         "Autopilot has no knowledge of page URLs and requires them to be included in the prompt when necessary.",
     ),
+  platform: z
+    .union([z.literal("mobile"), z.literal("browser")])
+    .optional()
+    .describe(
+      "Target platform for the new test case. Required for Mixed-platform " +
+        "projects; for single-platform projects, may be omitted " +
+        "(defaults to the project platform), and if provided must match the " +
+        "project platform. Valid values are 'mobile' and 'browser'.",
+    ),
 });
 
 const testCaseEditTaskSchema = z.object({
@@ -141,6 +150,7 @@ export const apiV1_0CreateAutopilotTasks = (
                     task.testSettingsPatternName.trim(),
                 }),
                 prompt: task.prompt.trim(),
+                ...(task.platform && { platform: task.platform }),
               }),
             ) || [],
           test_case_edit_tasks:
