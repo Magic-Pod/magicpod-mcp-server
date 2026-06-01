@@ -52,13 +52,5 @@
     "@types/swagger2openapi": "^7.0.4",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3"
-  },
-  "overrides": {
-    "follow-redirects": "^1.16.0",
-    "hono": "^4.12.18",
-    "@hono/node-server": "^2.0.0",
-    "fast-uri": "^3.1.2",
-    "ip-address": "^10.2.0",
-    "qs": "^6.15.2"
   }
 }
