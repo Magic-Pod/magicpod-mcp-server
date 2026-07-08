@@ -15,15 +15,23 @@ import { apiV1_0CreateAutopilotTasks } from "./tools/api-v1-0-create-autopilot-t
 import { apiV1_0ListTestSettings } from "./tools/api-v1-0-list-test-settings.js";
 
 const program = new Command();
-program.option("--api-token <key>", "MagicPod API token to use");
+program.option(
+  "--api-token <key>",
+  "MagicPod API token to use (falls back to MAGICPOD_API_TOKEN environment variable)",
+);
 program.option("--debug", "For internal debug use");
 program.parse(process.argv);
-const options: { apiToken: string; debug: boolean } = program.opts();
+const options: { apiToken?: string; debug: boolean } = program.opts();
 
-if (!options.apiToken) {
-  console.error("--api-token must be provided");
-  process.exit(1);
+function requireApiToken(): string {
+  const apiToken = options.apiToken || process.env.MAGICPOD_API_TOKEN;
+  if (!apiToken) {
+    console.error("--api-token or MAGICPOD_API_TOKEN must be provided");
+    process.exit(1);
+  }
+  return apiToken;
 }
+const apiToken = requireApiToken();
 
 async function main() {
   const baseUrlEnvironmentVariable = options.debug
@@ -40,14 +48,14 @@ async function main() {
   if (httpProxy) {
     axios.defaults.httpAgent = new HttpProxyAgent(httpProxy);
   }
-  const proxy = await initMagicPodApiProxy(baseUrl, options.apiToken, [
-    apiV1_0UploadFileCreate(baseUrl, options.apiToken),
-    apiV1_0UploadDataPatterns(baseUrl, options.apiToken),
-    apiV1_0ListTestSettings(baseUrl, options.apiToken),
+  const proxy = await initMagicPodApiProxy(baseUrl, apiToken, [
+    apiV1_0UploadFileCreate(baseUrl, apiToken),
+    apiV1_0UploadDataPatterns(baseUrl, apiToken),
+    apiV1_0ListTestSettings(baseUrl, apiToken),
     searchMagicpodArticles(),
     readMagicpodArticle(),
     ...(featureFlags.enableAutopilotTasks
-      ? [apiV1_0CreateAutopilotTasks(baseUrl, options.apiToken)]
+      ? [apiV1_0CreateAutopilotTasks(baseUrl, apiToken)]
       : []),
   ]);
   await proxy.connect(new StdioServerTransport());
