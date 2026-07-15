@@ -36,6 +36,25 @@ Make sure that you replace `YOUR-API-TOKEN` with your actual MagicPod API token.
 
 <img width="1015" alt="retrieve API token" src="https://github.com/user-attachments/assets/77931857-284d-4d7f-968b-c6a000f518c1" />
 
+### Using an environment variable instead of `--api-token`
+
+Passing the token via `--api-token` puts it in plain text in the process's argument list (visible via `ps`, `/proc/<pid>/cmdline`, monitoring tools, etc.), which can be a concern on shared or monitored hosts. As an alternative, you can set the `MAGICPOD_API_TOKEN` environment variable instead, using the `env` field supported by most MCP clients:
+
+```json
+{
+  "mcpServers": {
+    "magicpod-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "magicpod-mcp-server"],
+      "env": {
+        "MAGICPOD_API_TOKEN": "YOUR-API-TOKEN"
+      }
+    }
+  }
+}
+```
+
+If both `--api-token` and `MAGICPOD_API_TOKEN` are set, `--api-token` takes precedence.
 
 ## Development
 
