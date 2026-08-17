@@ -1,5 +1,10 @@
 # magicpod-mcp-server
 
+> [!IMPORTANT]
+> **This repository is deprecated** in favor of the new [MagicPod MCP Server](https://support.magic-pod.com/hc/articles/46186888063769). It will only receive bug fixes and security fixes for a limited support period, and will be archived once that period ends. The exact end date has not been finalized yet and will be announced here soon.
+
+Please migrate to the new MagicPod MCP Server — see the [setup instructions](https://support.magic-pod.com/hc/articles/46186888063769#01JSP2AG44QPW0AWSSMP1KR7WN) for details.
+
 An MCP (Model Context Protocol) server that integrates your AI agents with MagicPod
 
 ## Getting Started
