@@ -34,7 +34,7 @@ const testCaseCreateTaskSchema = z.object({
         "Autopilot has no knowledge of page URLs and requires them to be included in the prompt when necessary.",
     ),
   platform: z
-    .union([z.literal("mobile"), z.literal("browser")])
+    .enum(["mobile", "browser"])
     .optional()
     .describe(
       "Target platform for the new test case. Required for Mixed-platform " +
