@@ -10,8 +10,7 @@ import { OpenAPIToMCPConverter } from "../openapi/parser.js";
 import { HttpClient, HttpClientError } from "../client/http-client.js";
 import { OpenAPIV3 } from "openapi-types";
 import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { zodToJsonSchema } from "openai/_vendor/zod-to-json-schema/index";
-import { ZodRawShape } from "zod";
+import { z, ZodRawShape } from "zod";
 import { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 type PathItemObject = OpenAPIV3.PathItemObject & {
@@ -128,8 +127,9 @@ export class MCPProxy {
         tools.push({
           name: tool.name,
           description: tool.description,
-          inputSchema: zodToJsonSchema(tool.inputSchema, "input").definitions
-            ?.input as Tool["inputSchema"],
+          inputSchema: z.toJSONSchema(tool.inputSchema, {
+            io: "input",
+          }) as Tool["inputSchema"],
         });
       }
 
