@@ -28,7 +28,7 @@ export const readMagicpodArticle = () => {
           "An article ID of MagicPod Help Center, which can be retrieved by 'search-magicpod-articles' tool",
         ),
       locale: z
-        .union([z.literal("ja"), z.literal("en-us")])
+        .enum(["ja", "en-us"])
         .describe("Article's language"),
     }),
     handleRequest: async ({ articleId, locale }) => {

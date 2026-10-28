@@ -30,7 +30,7 @@ export const searchMagicpodArticles = () => {
           "Queries to search MagicPod Help Center's articles, split by whitespaces",
         ),
       locale: z
-        .union([z.literal("ja"), z.literal("en-us")])
+        .enum(["ja", "en-us"])
         .describe("Query's and search target's locale"),
     }),
     handleRequest: async ({ query, locale }) => {
