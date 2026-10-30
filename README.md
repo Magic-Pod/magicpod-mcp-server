@@ -1,8 +1,8 @@
 # magicpod-mcp-server
 
 > [!IMPORTANT]
-> **This repository is deprecated** in favor of the new [MagicPod MCP Server](https://support.magic-pod.com/hc/articles/46186888063769).
-> It will only receive bug fixes and security fixes until November 1, 2026, after which it will be archived.
+> **This repository is archived** in favor of the new [MagicPod MCP Server](https://support.magic-pod.com/hc/articles/46186888063769).
+> It will not receive bug fixes and security fixes now. Switch to the new MCP server.
 
 Please migrate to the new MagicPod MCP Server — see the [setup instructions](https://support.magic-pod.com/hc/articles/46186888063769#01JSP2AG44QPW0AWSSMP1KR7WN) for details.
 
